@@ -89,13 +89,20 @@ export default function App() {
   // Token aus URL holen und sender aus registration_tokens laden
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
 
-    if (!token) {
-      console.error('No token in URL. Expected ?token=EXAMPLETOKEN123');
-      setSubmitError('Missing token in onboarding link.');
-      return;
-    }
+// Unterstütze verschiedene Namen für den Token
+const token =
+  params.get('token') ||   // Standard
+  params.get('t') ||       // dein aktueller Link
+  params.get('auth') ||    // optional für spätere Nutzung
+  null;
+
+if (!token) {
+  console.error('No token found in URL. Expected ?token= or ?t=');
+  setSubmitError('Missing token in onboarding link.');
+  return;
+}
+
 
     const loadSender = async () => {
       const { data, error } = await supabase
