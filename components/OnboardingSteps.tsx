@@ -6,7 +6,9 @@ import { motion } from 'framer-motion';
 import { 
   Instagram, Facebook, Youtube, Monitor, Users, 
   Target, Ban, Search, CheckCircle2, ChevronRight, Activity, 
-  Watch, Circle, Grip, LayoutGrid, Scale, Utensils, Dumbbell, Apple, Mail
+  Watch, Circle, Grip, LayoutGrid, Scale, Utensils, Dumbbell, Apple, Mail,
+  Dot,
+  EllipsisVertical
 } from 'lucide-react';
 
 interface StepProps {
@@ -17,27 +19,47 @@ interface StepProps {
   progress: number;
 }
 
-// 0. Welcome Screen
 export const WelcomeStep: React.FC<StepProps> = ({ onNext }) => {
   return (
-    <div className="flex flex-col h-full bg-white relative p-6">
-      <div className="flex-1 flex flex-col items-center justify-center text-center">
-        <div className="w-24 h-24 bg-black rounded-3xl flex items-center justify-center mb-8 shadow-xl">
-           <Activity size={48} className="text-white" />
-        </div>
-        
-        <h1 className="text-4xl font-black tracking-tight mb-4">ShapeMate</h1>
-        <p className="text-lg text-gray-500 font-medium max-w-xs leading-relaxed">
-          Your personal AI-powered plan to reach your dream body.
+    <div className="flex flex-col h-full bg-white relative">
+
+      {/* Logo oben rechts */}
+      <div className="absolute top-4 right-4 z-20">
+        <img
+          src="/assets/logoDark.png"
+          alt="Shapemate Logo"
+          className="w-10 h-10 opacity-90"
+        />
+      </div>
+
+      {/* Centered but slightly higher */}
+      <div className="flex flex-col items-center justify-center px-4 flex-1 -mt-10">
+
+        {/* Mockup */}
+        <img
+          src="/assets/iphone13.png"
+          alt="App Preview"
+          className="w-[240px] object-contain mb-4"
+        />
+
+        {/* Claim */}
+        <p className="text-2xl font-semibold text-gray-700 tracking-tight text-center mt-10">
+          Fitness &amp; Health made easy
         </p>
       </div>
-      
+
+      {/* Sticky Footer */}
       <StickyFooter>
         <Button onClick={onNext}>Get Started</Button>
       </StickyFooter>
     </div>
   );
 };
+
+
+
+
+
 
 // 1. Gender
 export const GenderStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
@@ -49,7 +71,7 @@ export const GenderStep: React.FC<StepProps> = ({ data, updateData, onNext, onBa
       showBack={true}
       onBack={onBack}
     >
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-4 pt-20">
         {['Male', 'Female'].map((g) => (
           <SelectCard 
             key={g} 
@@ -69,9 +91,9 @@ export const GenderStep: React.FC<StepProps> = ({ data, updateData, onNext, onBa
 // 1.5. Workouts (New)
 export const WorkoutsStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
   const options = [
-    { value: '0-2', label: 'Occasional workouts', icon: <Circle size={20} className="fill-current"/> },
-    { value: '3-5', label: 'Regular workouts', icon: <Grip size={20} className="fill-current"/> },
-    { value: '6+', label: 'Dedicated athlete', icon: <LayoutGrid size={20} className="fill-current"/> },
+    { value: '0-2', label: 'Occasional workouts', icon: <Dot size={20} className="fill-current"/> },
+    { value: '3-5', label: 'Regular workouts', icon: <EllipsisVertical size={20} className="fill-current"/> },
+    { value: '6+', label: 'Dedicated athlete', icon: <Grip size={20} className="fill-current"/> },
   ];
 
   return (
@@ -82,7 +104,7 @@ export const WorkoutsStep: React.FC<StepProps> = ({ data, updateData, onNext, on
       showBack={true}
       onBack={onBack}
     >
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-4 pt-10">
         {options.map((opt) => (
           <SelectCard 
             key={opt.value} 
@@ -153,100 +175,132 @@ export const HistoryStep: React.FC<StepProps> = ({ data, updateData, onNext, onB
 
 // 4. Info Results (Static)
 export const InfoResultsStep: React.FC<StepProps> = ({ onNext, onBack, progress }) => (
-  <Layout title="ShapeMate creates long-term results" progress={progress} onBack={onBack}>
-    <div className="mt-8 bg-gray-50 rounded-3xl p-6 border border-gray-100">
-        <h3 className="font-semibold text-gray-500 mb-4 text-sm">Your weight</h3>
-        {/* Mock Chart */}
-        <div className="relative h-48 w-full">
+  <Layout 
+    title="Shapemate creates long-term results"
+    progress={progress}
+    onBack={onBack}
+  >
+
+    <div className="mt-10 bg-gray-50 rounded-3xl p-6 border border-gray-100">
+
+        {/* Intro sentence bleibt bestehen */}
+        <p className="text-sm text-gray-600 text-center mb-4 leading-relaxed">
+          Over 80% of users improve their long-term health when tracking consistently.
+        </p>
+
+        {/* Grafik höher und ohne Text darunter */}
+        <div className="relative h-56 w-full mt-15">
+
             <svg viewBox="0 0 100 50" className="w-full h-full overflow-visible">
-                <path d="M0,20 Q20,10 50,40 T100,45" fill="none" stroke="#E5E7EB" strokeWidth="2" strokeDasharray="4 4" />
-                <path d="M0,20 Q40,20 60,35 T100,45" fill="none" stroke="black" strokeWidth="3" />
-                <circle cx="0" cy="20" r="3" fill="white" stroke="black" strokeWidth="2" />
-                <circle cx="100" cy="45" r="3" fill="white" stroke="black" strokeWidth="2" />
+
+                {/* Graue Vergleichslinie (flach) */}
+                <path
+                  d="M0,40 Q30,40 60,42 T100,43"
+                  fill="none"
+                  stroke="#E5E7EB"
+                  strokeWidth="2"
+                  strokeDasharray="4 4"
+                />
+
+                {/* SCHWARZE LINIE — links unten → rechts oben (steigend) */}
+                <path
+                  d="M0,45 Q35,30 65,20 T100,10"
+                  fill="none"
+                  stroke="black"
+                  strokeWidth="3"
+                />
+
+                {/* Start & Endpunkte */}
+                <circle cx="0" cy="45" r="3" fill="white" stroke="black" strokeWidth="2" />
+                <circle cx="100" cy="10" r="3" fill="white" stroke="black" strokeWidth="2" />
             </svg>
-            <div className="absolute top-1/2 left-1/4 bg-black text-white text-xs px-2 py-1 rounded-md transform -translate-y-1/2">
+
+            {/* ShapeMate Label */}
+            <div className="absolute top-[55%] left-[30%] bg-black text-white text-xs px-2 py-1 rounded-md">
                 ShapeMate
             </div>
         </div>
-        <div className="flex justify-between text-xs text-gray-400 mt-2 font-medium">
+
+        {/* Month labels */}
+        <div className="flex justify-between text-xs text-gray-400 mt-3 font-medium">
             <span>Month 1</span>
             <span>Month 6</span>
         </div>
-        <p className="mt-6 text-center text-sm text-gray-600 leading-relaxed">
-            80% of ShapeMate users maintain their weight loss even 6 months later
-        </p>
+
+        {/* *** Kein Text mehr unter der Grafik *** */}
     </div>
+
     <StickyFooter>
       <Button onClick={onNext}>Continue</Button>
     </StickyFooter>
+
   </Layout>
 );
+
+
 
 // 5. Measurements (Wheel Pickers)
 export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
   const [unit, setUnit] = useState<'imperial' | 'metric'>('metric');
 
-  // Range Generators
-  const cmRange = Array.from({ length: 151 }, (_, i) => 100 + i); // 100 - 250 cm
-  const kgRange = Array.from({ length: 221 }, (_, i) => 30 + i); // 30 - 250 kg
-  
-  const ftRange = Array.from({ length: 5 }, (_, i) => 4 + i); // 4 - 8 ft
-  const inRange = Array.from({ length: 12 }, (_, i) => i); // 0 - 11 in
-  const lbsRange = Array.from({ length: 401 }, (_, i) => 50 + i); // 50 - 450 lbs
+  // Ranges
+  const cmRange = Array.from({ length: 151 }, (_, i) => 100 + i);
+  const kgRange = Array.from({ length: 221 }, (_, i) => 30 + i);
 
-  // Parsed State for Pickers
-  const [cm, setCm] = useState(data.height.unit === 'cm' && data.height.value ? parseInt(data.height.value) : 170);
-  const [kg, setKg] = useState(data.weight.unit === 'kg' && data.weight.value ? parseInt(data.weight.value) : 70);
-  
-  const [ft, setFt] = useState(5);
-  const [inch, setInch] = useState(9);
+  const lbsRange = Array.from({ length: 401 }, (_, i) => 50 + i);
+
+  // For imperial height picker
+  const imperialHeightOptions = [];
+  for (let f = 3; f <= 7; f++) {
+    for (let i = 0; i <= 11; i++) {
+      imperialHeightOptions.push(`${f}' ${i}"`);
+    }
+  }
+
+  // State
+  const [cm, setCm] = useState(
+    data.height.unit === 'cm' && data.height.value ? parseInt(data.height.value) : 170
+  );
+  const [kg, setKg] = useState(
+    data.weight.unit === 'kg' && data.weight.value ? parseInt(data.weight.value) : 70
+  );
+
+  const [impHeightStr, setImpHeightStr] = useState("5' 9\"");
   const [lbs, setLbs] = useState(150);
 
-  // Update Parent Data on Change
+  // Sync data upward
   useEffect(() => {
     if (unit === 'metric') {
-      updateData({ 
+      updateData({
         height: { value: cm.toString(), unit: 'cm' },
         weight: { value: kg.toString(), unit: 'kg' }
       });
     } else {
-      updateData({ 
-        height: { value: `${ft}'${inch}"`, unit: 'ft' },
+      updateData({
+        height: { value: impHeightStr, unit: 'ft' },
         weight: { value: lbs.toString(), unit: 'lbs' }
       });
     }
-  }, [cm, kg, ft, inch, lbs, unit]);
-
-  const imperialHeightOptions = [];
-  for(let f = 3; f <= 7; f++) {
-    for(let i = 0; i < 12; i++) {
-        imperialHeightOptions.push(`${f}' ${i}"`);
-    }
-  }
-  
-  const [impHeightStr, setImpHeightStr] = useState("5' 9\"");
-
-  useEffect(() => {
-    if (unit === 'imperial') {
-       const parts = impHeightStr.replace('"','').split("' ");
-       updateData({ 
-          height: { value: impHeightStr, unit: 'ft' },
-          weight: { value: lbs.toString(), unit: 'lbs' }
-       });
-    }
-  }, [impHeightStr, lbs, unit]);
-
+  }, [cm, kg, impHeightStr, lbs, unit]);
 
   return (
-    <Layout title="Height & weight" subtitle="This will be used to calibrate your custom plan." progress={progress} onBack={onBack}>
+    <Layout
+      title="Height & weight"
+      subtitle="This will be used to calibrate your custom plan."
+      progress={progress}
+      onBack={onBack}
+    >
+      {/* Unit Switch */}
       <div className="flex justify-center mb-10 mt-6">
-        <div className="bg-gray-100 p-1 rounded-full flex gap-1 relative z-20">
+        <div className="bg-gray-100 p-1 rounded-full flex gap-1">
           {['Imperial', 'Metric'].map((u) => (
             <button
               key={u}
               onClick={() => setUnit(u.toLowerCase() as any)}
               className={`px-8 py-2.5 rounded-full text-sm font-semibold transition-all ${
-                unit === u.toLowerCase() ? 'bg-white shadow-md text-black' : 'text-gray-400 hover:text-gray-600'
+                unit === u.toLowerCase()
+                  ? 'bg-white shadow-md text-black'
+                  : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               {u}
@@ -255,46 +309,52 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
         </div>
       </div>
 
-      {/* Two Column Layout */}
+      {/* Columns */}
       <div className="flex gap-4 px-2">
-          {/* Height Column */}
-          <div className="flex-1 flex flex-col items-center">
-             <h3 className="font-bold text-lg mb-4">Height</h3>
-             {unit === 'metric' ? (
-               <ScrollPicker 
-                 items={cmRange} 
-                 value={cm} 
-                 onChange={(v) => setCm(v as number)} 
-                 label="cm"
-               />
-             ) : (
-               <ScrollPicker 
-                 items={imperialHeightOptions} 
-                 value={impHeightStr} 
-                 onChange={(v) => setImpHeightStr(v as string)} 
-               />
-             )}
-          </div>
+        {/* Height */}
+        <div className="flex-1 flex flex-col items-center">
+          <h3 className="font-bold text-lg mb-4">Height</h3>
 
-          {/* Weight Column */}
-          <div className="flex-1 flex flex-col items-center">
-             <h3 className="font-bold text-lg mb-4">Weight</h3>
-             {unit === 'metric' ? (
-               <ScrollPicker 
-                 items={kgRange} 
-                 value={kg} 
-                 onChange={(v) => setKg(v as number)} 
-                 label="kg"
-               />
-             ) : (
-               <ScrollPicker 
-                 items={lbsRange} 
-                 value={lbs} 
-                 onChange={(v) => setLbs(v as number)} 
-                 label="lbs"
-               />
-             )}
-          </div>
+          {unit === 'metric' ? (
+            <ScrollPicker
+              className="no-horizontal-pan"
+              items={cmRange}
+              value={cm}
+              onChange={(v) => setCm(v as number)}
+              label="cm"
+            />
+          ) : (
+            <ScrollPicker
+              className="no-horizontal-pan"
+              items={imperialHeightOptions}
+              value={impHeightStr}
+              onChange={(v) => setImpHeightStr(v as string)}
+            />
+          )}
+        </div>
+
+        {/* Weight */}
+        <div className="flex-1 flex flex-col items-center">
+          <h3 className="font-bold text-lg mb-4">Weight</h3>
+
+          {unit === 'metric' ? (
+            <ScrollPicker
+              className="no-horizontal-pan"
+              items={kgRange}
+              value={kg}
+              onChange={(v) => setKg(v as number)}
+              label="kg"
+            />
+          ) : (
+            <ScrollPicker
+              className="no-horizontal-pan"
+              items={lbsRange}
+              value={lbs}
+              onChange={(v) => setLbs(v as number)}
+              label="lbs"
+            />
+          )}
+        </div>
       </div>
 
       <StickyFooter>
@@ -303,6 +363,7 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
     </Layout>
   );
 };
+
 
 // 6. Birthday (Wheel Pickers)
 export const BirthdayStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
@@ -314,15 +375,14 @@ export const BirthdayStep: React.FC<StepProps> = ({ data, updateData, onNext, on
 
     // Parse existing date or default
     const defaultDate = data.birthDate ? new Date(data.birthDate) : new Date(2000, 0, 1);
-    
+
     const [selectedMonth, setSelectedMonth] = useState(months[defaultDate.getMonth()]);
     const [selectedDay, setSelectedDay] = useState(defaultDate.getDate());
     const [selectedYear, setSelectedYear] = useState(defaultDate.getFullYear());
 
     useEffect(() => {
-        // Construct YYYY-MM-DD
         const monthIndex = months.indexOf(selectedMonth);
-        // Simple day validation
+
         const maxDays = new Date(selectedYear, monthIndex + 1, 0).getDate();
         const validDay = Math.min(selectedDay, maxDays);
         if (validDay !== selectedDay) setSelectedDay(validDay);
@@ -332,35 +392,45 @@ export const BirthdayStep: React.FC<StepProps> = ({ data, updateData, onNext, on
     }, [selectedMonth, selectedDay, selectedYear]);
 
     return (
-        <Layout title="When were you born?" subtitle="This will be used to calibrate your custom plan." progress={progress} onBack={onBack}>
+        <Layout
+            title="When were you born?"
+            subtitle="This will be used to calibrate your custom plan."
+            progress={progress}
+            onBack={onBack}
+        >
             <div className="mt-12 px-2">
                 <div className="flex gap-2 justify-center">
+                    
                     {/* Month Picker */}
-                    <div className="w-32 flex-shrink-0">
-                        <ScrollPicker 
-                            items={months} 
-                            value={selectedMonth} 
-                            onChange={(v) => setSelectedMonth(v as string)} 
+                    <div className="w-32 flex-shrink-0 no-horizontal-pan">
+                        <ScrollPicker
+                            items={months}
+                            value={selectedMonth}
+                            onChange={(v) => setSelectedMonth(v as string)}
                         />
                     </div>
+
                     {/* Day Picker */}
-                    <div className="w-20 flex-shrink-0">
-                        <ScrollPicker 
-                            items={days} 
-                            value={selectedDay} 
-                            onChange={(v) => setSelectedDay(v as number)} 
+                    <div className="w-20 flex-shrink-0 no-horizontal-pan">
+                        <ScrollPicker
+                            items={days}
+                            value={selectedDay}
+                            onChange={(v) => setSelectedDay(v as number)}
                         />
                     </div>
+
                     {/* Year Picker */}
-                    <div className="w-24 flex-shrink-0">
-                        <ScrollPicker 
-                            items={years} 
-                            value={selectedYear} 
-                            onChange={(v) => setSelectedYear(v as number)} 
+                    <div className="w-24 flex-shrink-0 no-horizontal-pan">
+                        <ScrollPicker
+                            items={years}
+                            value={selectedYear}
+                            onChange={(v) => setSelectedYear(v as number)}
                         />
                     </div>
+
                 </div>
             </div>
+
             <StickyFooter>
                 <Button onClick={onNext} disabled={!data.birthDate}>Continue</Button>
             </StickyFooter>
@@ -368,10 +438,11 @@ export const BirthdayStep: React.FC<StepProps> = ({ data, updateData, onNext, on
     );
 };
 
+
 // 7. Goal
 export const GoalStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => (
   <Layout title="What is your goal?" subtitle="This helps us generate a plan for your calorie intake." progress={progress} onBack={onBack}>
-    <div className="mt-6 space-y-4">
+    <div className="mt-6 space-y-4 pt-20">
         {['Lose weight', 'Maintain', 'Gain weight'].map(goal => (
              <SelectCard key={goal} label={goal} selected={data.goal === goal} onClick={() => updateData({ goal })} />
         ))}

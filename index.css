@@ -1,0 +1,5 @@
+/* Verhindert horizontales Ziehen auf mobilen Geräten */
+.no-horizontal-pan {
+  touch-action: pan-y !important; /* nur vertikal */
+  overscroll-behavior-x: none !important; /* keine Bewegung zur Seite */
+}

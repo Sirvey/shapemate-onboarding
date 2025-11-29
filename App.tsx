@@ -11,6 +11,7 @@ import {
 import { ResultsStep, DashboardStep, PaywallHook, PaywallTrial, PaywallPromo } from './components/ComplexScreens';
 import { supabase } from './supabaseClient';
 
+
 // Hilfsfunktionen für Konvertierungen und Mapping
 const parseImperialHeightToCm = (value: string): number | null => {
   // Erwartetes Format: 5'9" oder 5' 9"
