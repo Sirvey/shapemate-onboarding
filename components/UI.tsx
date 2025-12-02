@@ -204,7 +204,10 @@ export const ScrollPicker: React.FC<ScrollPickerProps> = ({ items, value, onChan
   };
 
   return (
-    <div className="relative h-48 w-full overflow-hidden">
+  <div 
+    className="relative h-48 w-full overflow-hidden touch-none"
+  >
+
       {/* Selection Highlight (Center) */}
       <div className="absolute top-[calc(50%-24px)] left-0 right-0 h-12 bg-gray-100 rounded-xl -z-10 pointer-events-none" />
       
@@ -214,11 +217,12 @@ export const ScrollPicker: React.FC<ScrollPickerProps> = ({ items, value, onChan
 
       {/* Scroll Container */}
       <div 
-        ref={containerRef}
-        onScroll={handleScroll}
-        className="h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[calc(50%-24px)]"
-        style={{ scrollBehavior: 'smooth' }}
-      >
+  ref={containerRef}
+  onScroll={handleScroll}
+  className="h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[calc(50%-24px)] touch-pan-y"
+  style={{ scrollBehavior: 'smooth', touchAction: 'pan-y' }}
+>
+
         {items.map((item, i) => (
           <div 
             key={i} 

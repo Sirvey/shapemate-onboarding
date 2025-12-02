@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { INITIAL_DATA, UserData, StepType } from './types';
 import {
-  WelcomeStep, GenderStep, WorkoutsStep, SourceStep, HistoryStep, InfoResultsStep, MeasurementsStep,
+  WelcomeStep, GenderStep, WorkoutsStep, SourceStep, InfoResultsStep, MeasurementsStep,
   BirthdayStep, GoalStep, ObstaclesStep, DietStep, AccomplishStep,
   TrustStep, ConnectAppsStep, RatingStep,
   NotificationsStep, ReferralStep, GeneratingStep, EmailSignupStep
@@ -56,7 +56,6 @@ const FLOW = [
   StepType.GENDER,
   StepType.WORKOUTS,
   StepType.SOURCE,
-  StepType.HISTORY,
   StepType.INFO_RESULTS,
   StepType.MEASUREMENTS,
   StepType.BIRTHDAY,
@@ -301,7 +300,6 @@ if (!token) {
       case StepType.GENDER: return <GenderStep {...commonProps} />;
       case StepType.WORKOUTS: return <WorkoutsStep {...commonProps} />;
       case StepType.SOURCE: return <SourceStep {...commonProps} />;
-      case StepType.HISTORY: return <HistoryStep {...commonProps} />;
       case StepType.INFO_RESULTS: return <InfoResultsStep {...commonProps} />;
       case StepType.MEASUREMENTS: return <MeasurementsStep {...commonProps} />;
       case StepType.BIRTHDAY: return <BirthdayStep {...commonProps} />;

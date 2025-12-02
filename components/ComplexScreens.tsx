@@ -140,44 +140,35 @@ export const DashboardStep: React.FC<Props> = ({ onNext }) => {
 
 // --- PAYWALL COMPONENTS ---
 
-// Paywall A: Free Hook
+// A: Free Hook
 export const PaywallHook: React.FC<Props> = ({ onNext }) => (
-    <div className="flex flex-col h-full bg-white relative">
-        <div className="flex justify-between p-4">
-            <span className="font-mono text-xs text-gray-400">00:36</span>
-            <span className="text-xs text-gray-400">Restore</span>
-        </div>
-        
-        <div className="px-6 text-center mt-4">
-            <h1 className="text-2xl font-black mb-1">We want you to</h1>
-            <h1 className="text-2xl font-black mb-6">try ShapeMate for free.</h1>
-            
-            <div className="relative mx-auto w-64 h-96 mb-6">
-                 {/* Phone Mockup Image */}
-                 <div className="w-full h-full bg-gray-100 rounded-[3rem] border-8 border-gray-900 overflow-hidden relative shadow-2xl">
-                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-6 bg-black rounded-b-xl z-20" />
-                     <img src="https://picsum.photos/300/600?tech" className="w-full h-full object-cover" />
-                     <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center p-4">
-                         <div className="text-4xl font-bold mb-2">2199</div>
-                         <div className="flex gap-2 mb-4">
-                            <div className="w-10 h-10 bg-gray-200 rounded-full"/>
-                            <div className="w-10 h-10 bg-gray-200 rounded-full"/>
-                         </div>
-                     </div>
-                 </div>
-            </div>
-            
-            <div className="flex items-center justify-center gap-2 text-sm font-bold mb-6">
-                <CheckCircle2 size={16} /> No Payment Due Now
-            </div>
-        </div>
-        
-        <div className="mt-auto p-6 bg-white border-t border-gray-100">
-             <Button onClick={onNext} className="mb-3">Try for $0.00</Button>
-             <p className="text-center text-xs text-gray-400">Just $29.99 per year ($2.49/mo)</p>
-        </div>
+  <div className="flex flex-col h-full bg-white relative">
+
+    <div className="px-6 text-center mt-8">
+      <h1 className="text-2xl font-black mb-1">We want you to</h1>
+      <h1 className="text-2xl font-black mb-6">try ShapeMate for free.</h1>
+
+      {/* Larger iPhone Mockup */}
+      <div className="relative mx-auto w-72 h-[430px] mb-8">
+        <img
+          src="/assets/iphone1.png"
+          alt="ShapeMate Mockup"
+          className="w-full h-full object-contain"
+        />
+      </div>
+
+      <div className="flex items-center justify-center gap-2 text-sm font-bold mb-6">
+        <CheckCircle2 size={16} /> No Payment Due Now
+      </div>
     </div>
+
+    <div className="mt-auto p-6 bg-white border-t border-gray-100">
+      <Button onClick={onNext} className="mb-3">Try for €0.00</Button>
+      <p className="text-center text-xs text-gray-400">Just €49.90 per year (€4.15/mo)</p>
+    </div>
+  </div>
 );
+
 
 // Paywall B: Trial Explainer
 export const PaywallTrial: React.FC<Props & {onExit: () => void}> = ({ onNext, onBack, onExit }) => {
@@ -219,7 +210,7 @@ export const PaywallTrial: React.FC<Props & {onExit: () => void}> = ({ onNext, o
                         className={`flex-1 p-4 rounded-xl border-2 text-left relative ${plan === 'monthly' ? 'border-black bg-gray-50' : 'border-gray-200'}`}
                     >
                         <div className="text-[10px] text-gray-500">Monthly</div>
-                        <div className="font-bold text-sm">$9.99 /mo</div>
+                        <div className="font-bold text-sm">€9.90 /mo</div>
                         {plan === 'monthly' && <div className="absolute top-2 right-2 w-4 h-4 border-2 border-black rounded-full"><div className="w-2 h-2 bg-black rounded-full m-0.5"/></div>}
                         {plan !== 'monthly' && <div className="absolute top-2 right-2 w-4 h-4 border-2 border-gray-300 rounded-full"/>}
                     </button>
@@ -230,7 +221,7 @@ export const PaywallTrial: React.FC<Props & {onExit: () => void}> = ({ onNext, o
                     >
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-0.5 rounded">3 DAYS FREE</div>
                         <div className="text-[10px] text-gray-500">Yearly</div>
-                        <div className="font-bold text-sm">$2.49/mo</div>
+                        <div className="font-bold text-sm">€4.15/mo</div>
                          {plan === 'yearly' && <div className="absolute top-2 right-2 w-4 h-4 border-2 border-black rounded-full"><div className="w-2 h-2 bg-black rounded-full m-0.5"/></div>}
                         {plan !== 'yearly' && <div className="absolute top-2 right-2 w-4 h-4 border-2 border-gray-300 rounded-full"/>}
                     </button>
@@ -241,7 +232,7 @@ export const PaywallTrial: React.FC<Props & {onExit: () => void}> = ({ onNext, o
                 </div>
                 
                 <Button onClick={onNext}>Start My 3-Day Free Trial</Button>
-                <p className="text-center text-[10px] text-gray-400 mt-3">3 days free, then $29.99 per year ($2.49/mo)</p>
+                <p className="text-center text-[10px] text-gray-400 mt-3">3 days free, then €49.90 per year (€4.15/mo)</p>
             </div>
         </div>
     );
