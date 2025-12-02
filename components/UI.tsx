@@ -219,9 +219,23 @@ export const ScrollPicker: React.FC<ScrollPickerProps> = ({ items, value, onChan
       <div 
   ref={containerRef}
   onScroll={handleScroll}
-  className="h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[calc(50%-24px)] touch-pan-y"
-  style={{ scrollBehavior: 'smooth', touchAction: 'pan-y' }}
+  className="
+    h-full 
+    overflow-y-scroll 
+    overflow-x-hidden 
+    snap-y snap-mandatory 
+    no-scrollbar 
+    py-[calc(50%-24px)] 
+    touch-pan-y 
+    select-none
+  "
+  style={{ 
+    scrollBehavior: 'smooth',
+    touchAction: 'pan-y !important',
+    WebkitOverflowScrolling: 'touch'
+  }}
 >
+
 
         {items.map((item, i) => (
           <div 
