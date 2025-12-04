@@ -3,18 +3,18 @@ import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { INITIAL_DATA, UserData, StepType } from './types';
 import {
-  WelcomeStep, GenderStep, WorkoutsStep, SourceStep, InfoResultsStep, MeasurementsStep,
+  WelcomeStep, NameStep, GenderStep, WorkoutsStep, SourceStep, InfoResultsStep, MeasurementsStep,
   BirthdayStep, GoalStep, ObstaclesStep, DietStep, AccomplishStep,
   TrustStep, ConnectAppsStep, RatingStep,
   NotificationsStep, ReferralStep, GeneratingStep, EmailSignupStep
 } from './components/OnboardingSteps';
 import { ResultsStep, DashboardStep, PaywallHook, PaywallTrial, PaywallPromo } from './components/ComplexScreens';
 import { supabase } from './supabaseClient';
+import { generateNutritionPlan } from './geminiClient';
 
 
 // Hilfsfunktionen für Konvertierungen und Mapping
 const parseImperialHeightToCm = (value: string): number | null => {
-  // Erwartetes Format: 5'9" oder 5' 9"
   const match = value.match(/(\d+)\s*'\s*(\d+)\s*"?/);
   if (!match) return null;
   const feet = parseInt(match[1], 10);
@@ -26,9 +26,9 @@ const parseImperialHeightToCm = (value: string): number | null => {
 const convertWeightToKg = (weight: { value: string; unit: 'kg' | 'lbs' }): number | null => {
   const numeric = parseFloat(weight.value);
   if (Number.isNaN(numeric)) return null;
-  if (weight.unit === 'kg') return numeric;
-  // lbs → kg
-  return Math.round(numeric * 0.45359237 * 10) / 10;
+  return weight.unit === 'kg'
+    ? numeric
+    : Math.round(numeric * 0.45359237 * 10) / 10;
 };
 
 const mapGoalToCode = (goal: string | undefined): string | null => {
@@ -50,9 +50,11 @@ const mapGenderToCode = (gender: string | undefined): string | null => {
   return null;
 };
 
-// Steps definition array to manage order and progress easily
+
+// Steps definition array
 const FLOW = [
   StepType.WELCOME,
+  StepType.NAME,
   StepType.GENDER,
   StepType.WORKOUTS,
   StepType.SOURCE,
@@ -69,12 +71,11 @@ const FLOW = [
   StepType.NOTIFICATIONS,
   StepType.REFERRAL,
   StepType.GENERATING,
-  StepType.RESULTS,       // 19: Loading Bar
-  StepType.DASHBOARD,     // 20: Dashboard
-  StepType.EMAIL_SIGNUP,  // 21: Email/Login
-  StepType.PAYWALL_HOOK,  // 22: Free Hook
-  StepType.PAYWALL_TRIAL, // 23: Trial Explainer
-  // PAYWALL_PROMO ist separate Exit-Intent Variante
+  StepType.RESULTS,
+  StepType.DASHBOARD,
+  StepType.EMAIL_SIGNUP,
+  StepType.PAYWALL_HOOK,
+  StepType.PAYWALL_TRIAL,
 ];
 
 export default function App() {
@@ -86,23 +87,24 @@ export default function App() {
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Token aus URL holen und sender aus registration_tokens laden
+  // Gemini States
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
+
+  // Token aus URL holen
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
-// Unterstütze verschiedene Namen für den Token
-const token =
-  params.get('token') ||   // Standard
-  params.get('t') ||       // dein aktueller Link
-  params.get('auth') ||    // optional für spätere Nutzung
-  null;
+    const token =
+      params.get('token') ||
+      params.get('t') ||
+      params.get('auth') ||
+      null;
 
-if (!token) {
-  console.error('No token found in URL. Expected ?token= or ?t=');
-  setSubmitError('Missing token in onboarding link.');
-  return;
-}
-
+    if (!token) {
+      setSubmitError('Missing token in onboarding link.');
+      return;
+    }
 
     const loadSender = async () => {
       const { data, error } = await supabase
@@ -112,7 +114,6 @@ if (!token) {
         .single();
 
       if (error || !data) {
-        console.error('Could not resolve sender from token', error);
         setSubmitError('Could not find a registration for this link.');
         return;
       }
@@ -127,61 +128,65 @@ if (!token) {
     setUserData(prev => ({ ...prev, ...fields }));
   };
 
-  // zentrale Funktion zum Speichern in Supabase
-  const submitOnboardingToSupabase = async () => {
-    if (!sender) {
-      console.error('submitOnboardingToSupabase called without sender');
-      return;
+
+  // GEMINI: Berechnung der Nährwerte
+  const runGeminiPlan = async () => {
+    try {
+      setPlanLoading(true);
+      setPlanError(null);
+
+      const plan = await generateNutritionPlan(userData);
+
+      setUserData(prev => ({
+        ...prev,
+        aiPlan: plan,
+      }));
+    } catch (e) {
+      console.error(e);
+      setPlanError('We could not generate your personalized plan. Please try again.');
+      throw e;
+    } finally {
+      setPlanLoading(false);
     }
+  };
+
+
+  // Speichern im Backend
+  const submitOnboardingToSupabase = async () => {
+    if (!sender) return;
 
     setLoadingSubmit(true);
     setSubmitError(null);
 
     try {
-      // 1. Stammdaten vorbereiten
       const genderCode = mapGenderToCode(userData.gender);
+
       const heightCm =
-        userData.height?.unit === 'cm'
-          ? (() => {
-              const val = parseInt(userData.height.value || '', 10);
-              return Number.isNaN(val) ? null : val;
-            })()
-          : userData.height?.unit === 'ft'
+        userData.height.unit === 'cm'
+          ? parseInt(userData.height.value || '0', 10)
+          : userData.height.unit === 'ft'
             ? parseImperialHeightToCm(userData.height.value)
             : null;
 
-      const weightKg = userData.weight
-        ? convertWeightToKg(userData.weight as any)
-        : null;
+      const weightKg = convertWeightToKg(userData.weight);
 
-      const birthDate = userData.birthDate || null;
-      const goalCode = mapGoalToCode(userData.goal);
-      const referralSource = userData.source || null;
-      const diet = userData.diet || null;
-      const referralCode = userData.referralCode || null;
-      const email = userData.email || null;
-
-      // 1) stammdaten updaten, keine neue Zeile
       const { error: stammdatenError } = await supabase
         .from('stammdaten')
         .update({
+          name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
           gender: genderCode,
-          referral_source: referralSource,
+          referral_source: userData.source || null,
           groesse: heightCm,
-          geburtsdatum: birthDate,
-          goal: goalCode,
-          diet,
-          referral_code: referralCode,
-          mail: email,
+          geburtsdatum: userData.birthDate || null,
+          goal: mapGoalToCode(userData.goal),
+          diet: userData.diet || null,
+          referral_code: userData.referralCode || null,
+          mail: userData.email || null,
         })
         .eq('sender', sender);
 
-      if (stammdatenError) {
-        console.error('Error updating stammdaten', stammdatenError);
-        throw stammdatenError;
-      }
+      if (stammdatenError) throw stammdatenError;
 
-      // 2) user_weights. immer neue Zeile mit sender
       if (weightKg != null) {
         const { error: weightError } = await supabase
           .from('user_weights')
@@ -189,25 +194,14 @@ if (!token) {
             sender,
             weight: weightKg,
           });
-
-        if (weightError) {
-          console.error('Error inserting user_weights', weightError);
-          throw weightError;
-        }
+        if (weightError) throw weightError;
       }
 
-      // 3) Erinnerungen je nach notificationPreferences
-      // Annahme: Tabelle hat Spalten sender, type, active
-      const prefs = userData.notificationPreferences || {
-        weighing: false,
-        meal: false,
-        workout: false,
-      };
-
+      const prefs = userData.notificationPreferences;
       const reminderMappings = [
-        { key: 'weighing' as const, type: 'weighing' },
-        { key: 'meal' as const, type: 'meal' },
-        { key: 'workout' as const, type: 'workout' },
+        { key: 'weighing', type: 'weighing' },
+        { key: 'meal', type: 'meal' },
+        { key: 'workout', type: 'workout' },
       ];
 
       for (const r of reminderMappings) {
@@ -219,46 +213,26 @@ if (!token) {
           .eq('sender', sender)
           .eq('type', r.type);
 
-        if (reminderError) {
-          console.error('Error updating erinnerungen', r.type, reminderError);
-          throw reminderError;
-        }
+        if (reminderError) throw reminderError;
       }
 
-      // 4) Newsletter Subscription
-      if (email) {
-        const { error: newsletterError } = await supabase
-          .from('newsletter_subscribers')
-          .upsert(
-            { email },
-            { onConflict: 'email' } // email als unique Key vorausgesetzt
-          );
-
-        if (newsletterError) {
-          console.error('Error upserting newsletter_subscribers', newsletterError);
-          throw newsletterError;
-        }
-      }
-
-      console.log('Onboarding data successfully stored in Supabase');
     } catch (err: any) {
-      setSubmitError(err.message ?? 'Unexpected error while saving onboarding data');
+      setSubmitError(err.message || 'Unexpected error while saving onboarding data');
       throw err;
     } finally {
       setLoadingSubmit(false);
     }
   };
 
-  // nextStep angepasst. beim EMAIL_SIGNUP Step wird Supabase persist ausgeführt
+
+  // nextStep Logik
   const nextStep = async () => {
     const currentStepType = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
 
-    // Trigger Supabase Speichern beim Übergang von EmailSignup zur nächsten View
     if (currentStepType === StepType.EMAIL_SIGNUP) {
       try {
         await submitOnboardingToSupabase();
       } catch {
-        // Bei Fehler nicht weiter navigieren
         return;
       }
     }
@@ -266,7 +240,6 @@ if (!token) {
     if (currentStepIndex < FLOW.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
     } else {
-      // End of flow. hier könntest du später noch spezifisches Verhalten definieren
       alert('Flow completed');
     }
   };
@@ -277,13 +250,10 @@ if (!token) {
     }
   };
 
-  const triggerPromo = () => {
-    setShowPromo(true);
-  };
+  const triggerPromo = () => setShowPromo(true);
 
   const currentStepType = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
 
-  // Progress nur für Onboarding Steps
   const progress = Math.min(100, Math.round((currentStepIndex / 18) * 100));
 
   const renderStep = () => {
@@ -297,6 +267,7 @@ if (!token) {
 
     switch (currentStepType) {
       case StepType.WELCOME: return <WelcomeStep {...commonProps} />;
+      case StepType.NAME: return <NameStep {...commonProps} />;
       case StepType.GENDER: return <GenderStep {...commonProps} />;
       case StepType.WORKOUTS: return <WorkoutsStep {...commonProps} />;
       case StepType.SOURCE: return <SourceStep {...commonProps} />;
@@ -312,21 +283,46 @@ if (!token) {
       case StepType.RATING: return <RatingStep {...commonProps} />;
       case StepType.NOTIFICATIONS: return <NotificationsStep {...commonProps} />;
       case StepType.REFERRAL: return <ReferralStep {...commonProps} />;
-      case StepType.GENERATING: return <GeneratingStep {...commonProps} />;
-      case StepType.RESULTS: return <ResultsStep onNext={nextStep} />;
-      case StepType.DASHBOARD: return <DashboardStep onNext={nextStep} />;
-      case StepType.EMAIL_SIGNUP: return <EmailSignupStep {...commonProps} />;
-      case StepType.PAYWALL_HOOK: return <PaywallHook onNext={nextStep} />;
-      case StepType.PAYWALL_TRIAL: return <PaywallTrial onNext={nextStep} onBack={prevStep} onExit={triggerPromo} />;
-      case StepType.PAYWALL_PROMO: return <PaywallPromo onNext={() => alert('Offer claimed')} />;
-      default: return <div>Unknown step</div>;
+
+      // *** HERE: Gemini is executed ***
+      case StepType.GENERATING:
+        return (
+          <GeneratingStep
+            {...commonProps}
+            generatePlan={runGeminiPlan}
+            isGenerating={planLoading}
+            error={planError}
+          />
+        );
+
+      case StepType.RESULTS:
+        return <ResultsStep data={userData} onNext={nextStep} />;
+
+      case StepType.DASHBOARD:
+        return <DashboardStep data={userData} onNext={nextStep} />;
+
+      case StepType.EMAIL_SIGNUP:
+        return <EmailSignupStep {...commonProps} />;
+
+      case StepType.PAYWALL_HOOK:
+        return <PaywallHook onNext={nextStep} />;
+
+      case StepType.PAYWALL_TRIAL:
+        return <PaywallTrial onNext={nextStep} onBack={prevStep} onExit={triggerPromo} />;
+
+      case StepType.PAYWALL_PROMO:
+        return <PaywallPromo onNext={() => alert('Offer claimed')} />;
+
+      default:
+        return <div>Unknown step</div>;
     }
   };
+
 
   return (
     <div className="bg-gray-50 min-h-screen flex items-center justify-center font-sans text-gray-900">
       <div className="w-full max-w-md h-screen bg-white shadow-2xl overflow-hidden relative">
-        {/* Optional: einfache Fehlermeldung für Token / Submit */}
+
         {submitError && (
           <div className="absolute top-0 left-0 right-0 bg-red-50 text-red-700 text-xs px-3 py-2 z-30">
             {submitError}
@@ -339,8 +335,8 @@ if (!token) {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className={`h-full ${loadingSubmit ? 'opacity-60 pointer-events-none' : ''}`}
+            transition={{ duration: 0.25 }}
+            className={`${loadingSubmit ? 'opacity-60 pointer-events-none' : ''} h-full`}
           >
             {renderStep()}
           </motion.div>

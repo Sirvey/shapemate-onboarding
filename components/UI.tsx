@@ -225,7 +225,7 @@ export const ScrollPicker: React.FC<ScrollPickerProps> = ({ items, value, onChan
     overflow-x-hidden 
     snap-y snap-mandatory 
     no-scrollbar 
-    py-[calc(50%-24px)] 
+    py-[calc(60%-24px)]
     touch-pan-y 
     select-none
   "

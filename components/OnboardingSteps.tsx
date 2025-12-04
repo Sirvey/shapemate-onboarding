@@ -10,15 +10,22 @@ import {
   Dot,
   EllipsisVertical
 } from 'lucide-react';
-import { Repeat, Pizza, Clock, Lightbulb } from "lucide-react";
+import { Repeat, Pizza, Clock, Lightbulb, X, AlertCircle } from "lucide-react";
+import { supabase } from "../supabaseClient";
 
 interface StepProps {
   data: UserData;
-  updateData: (fields: Partial<UserData>) => void;
+  updateData: (patch: Partial<UserData>) => void;
   onNext: () => void;
   onBack: () => void;
   progress: number;
+
+  // nur für GeneratingStep genutzt
+  generatePlan?: () => Promise<void>;
+  isGenerating?: boolean;
+  error?: string | null;
 }
+
 
 export const WelcomeStep: React.FC<StepProps> = ({ onNext }) => {
   return (
@@ -57,6 +64,42 @@ export const WelcomeStep: React.FC<StepProps> = ({ onNext }) => {
   );
 };
 
+// 0.1 Name Step
+export const NameStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
+  const isValid = data.firstName?.trim() && data.lastName?.trim();
+
+  return (
+    <Layout 
+      title="What's your name?"
+      subtitle="We personalize your experience"
+      progress={progress}
+      showBack={true}
+      onBack={onBack}
+    >
+      <div className="mt-6 space-y-4">
+
+        <Input
+          placeholder="First name"
+          value={data.firstName}
+          onChange={(e) => updateData({ firstName: e.target.value })}
+        />
+
+        <Input
+          placeholder="Last name"
+          value={data.lastName}
+          onChange={(e) => updateData({ lastName: e.target.value })}
+        />
+
+      </div>
+
+      <StickyFooter>
+        <Button onClick={onNext} disabled={!isValid}>
+          Continue
+        </Button>
+      </StickyFooter>
+    </Layout>
+  );
+};
 
 
 
@@ -392,18 +435,58 @@ export const BirthdayStep: React.FC<StepProps> = ({ data, updateData, onNext, on
 
 
 // 7. Goal
-export const GoalStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => (
-  <Layout title="What is your goal?" subtitle="This helps us generate a plan for your calorie intake." progress={progress} onBack={onBack}>
-    <div className="mt-6 space-y-4">
-        {['Lose weight', 'Maintain', 'Gain weight'].map(goal => (
-             <SelectCard key={goal} label={goal} selected={data.goal === goal} onClick={() => updateData({ goal })} />
+export const GoalStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
+
+  const goals = [
+    {
+      id: "Lose weight",
+      label: "Fat Loss",
+      sub: "Reduce body fat effectively",
+      icon: <Scale className="w-6 h-6" />
+    },
+    {
+      id: "Maintain",
+      label: "General Fitness",
+      sub: "Improve overall health",
+      icon: <Activity className="w-6 h-6" />
+    },
+    {
+      id: "Gain weight",
+      label: "Muscle Building",
+      sub: "Build lean muscle mass",
+      icon: <Dumbbell className="w-6 h-6" />
+    }
+  ];
+
+  return (
+    <Layout 
+      title="What is your goal?" 
+      subtitle="This helps us generate a plan tailored just for you."
+      progress={progress}
+      onBack={onBack}
+    >
+      <div className="mt-6 space-y-4">
+        {goals.map((g) => (
+          <SelectCard
+            key={g.id}
+            label={g.label}
+            subLabel={g.sub}
+            icon={g.icon}
+            selected={data.goal === g.id}
+            onClick={() => updateData({ goal: g.id })}
+          />
         ))}
-    </div>
-    <StickyFooter>
-      <Button onClick={onNext} disabled={!data.goal}>Continue</Button>
-    </StickyFooter>
-  </Layout>
-);
+      </div>
+
+      <StickyFooter>
+        <Button onClick={onNext} disabled={!data.goal}>
+          Continue
+        </Button>
+      </StickyFooter>
+    </Layout>
+  );
+};
+
 
 // 8. Obstacles
 export const ObstaclesStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
@@ -830,69 +913,193 @@ export const NotificationsStep: React.FC<StepProps> = ({ data, updateData, onNex
 
 
 // 17. Referral
-export const ReferralStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => (
-    <Layout 
-      title="Enter referral code (optional)" 
-      subtitle="You can skip this step" 
-      progress={progress} 
+export const ReferralStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
+  const [referralInput, setReferralInput] = useState(data.referralCode || "");
+  const [submittedCode, setSubmittedCode] = useState<string | null>(data.referralCode || null);
+  const [submittedSource, setSubmittedSource] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  const validateReferral = async () => {
+    setError(null);
+    setChecking(true);
+
+    const trimmed = referralInput.trim();
+    if (!trimmed) {
+      setChecking(false);
+      return;
+    }
+
+    // Query: referral_code + source
+    const { data: match, error: dbError } = await supabase
+      .from("referral_codes")
+      .select("referral_code, source")
+      .eq("referral_code", trimmed)
+      .maybeSingle();
+
+    setChecking(false);
+
+    if (dbError) {
+      console.error(dbError);
+      setError("Something went wrong. Please try again.");
+      return;
+    }
+
+    if (!match) {
+      setError("This referral code does not exist.");
+      return;
+    }
+
+    // Valid code
+    setSubmittedCode(match.referral_code);
+    setSubmittedSource(match.source);
+    updateData({ referralCode: match.referral_code });
+  };
+
+  const removeCode = () => {
+    setSubmittedCode(null);
+    setSubmittedSource(null);
+    updateData({ referralCode: "" });
+  };
+
+  const isContinueEnabled = Boolean(submittedCode);
+
+  return (
+    <Layout
+      title="Enter referral code (optional)"
+      subtitle="You can skip this step"
+      progress={progress}
       onBack={onBack}
     >
-         <div className="mt-8">
-             <div className="relative flex items-center">
-                <input 
-                  type="text"
-                  placeholder="Invite Code" 
-                  className="w-full h-14 pl-4 pr-32 rounded-xl bg-gray-50 border-2 border-transparent focus:border-black focus:bg-white transition-all outline-none text-lg"
-                  value={data.referralCode}
-                  onChange={(e) => updateData({ referralCode: e.target.value })}
-                />
-                <button 
-                  onClick={onNext}
-                  className="absolute right-2 top-2 bottom-2 px-4 bg-gray-200 text-gray-600 text-sm font-bold rounded-lg hover:bg-black hover:text-white transition-colors"
-                >
-                  Submit
-                </button>
-             </div>
-         </div>
-         
-         <StickyFooter>
-             <Button variant="secondary" onClick={onNext}>Skip</Button>
-         </StickyFooter>
+      <div className="mt-8 space-y-4">
+
+        {/* Input */}
+        <div className="relative flex items-center">
+          <input
+            type="text"
+            placeholder="Invite Code"
+            className="w-full h-14 pl-4 pr-32 rounded-xl bg-gray-50 border-2
+                       border-transparent focus:border-black focus:bg-white transition-all
+                       outline-none text-lg"
+            value={referralInput}
+            onChange={(e) => setReferralInput(e.target.value)}
+          />
+
+          <button
+            onClick={validateReferral}
+            disabled={checking}
+            className={`absolute right-2 top-2 bottom-2 px-4 rounded-lg text-sm font-bold transition-all
+              ${checking ? 
+                "bg-gray-300 text-gray-500" :
+                "bg-gray-200 text-gray-700 hover:bg-black hover:text-white"
+              }`}
+          >
+            Submit
+          </button>
+        </div>
+
+        {/* Modern error message */}
+        {error && (
+          <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-xl animate-fadeIn">
+            <AlertCircle size={18} className="mt-0.5" />
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Sticker-style badge */}
+        {submittedCode && (
+          <div
+            className="flex items-center justify-between w-full
+                       bg-black/5 border border-black/10 rounded-xl
+                       px-4 py-3 text-base font-semibold text-gray-900 shadow-sm"
+          >
+            <span>
+              {submittedCode}
+              {submittedSource && (
+                <span className="text-gray-500 ml-2">
+                  – {submittedSource}
+                </span>
+              )}
+            </span>
+
+            <button
+              onClick={removeCode}
+              className="text-red-500 hover:text-red-700 transition"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <StickyFooter>
+        <Button onClick={onNext} disabled={!isContinueEnabled}>
+          Continue
+        </Button>
+
+        <Button variant="secondary" onClick={onNext} className="mt-3">
+          Skip
+        </Button>
+      </StickyFooter>
     </Layout>
-);
+  );
+};
 
 // 18. Generating
-export const GeneratingStep: React.FC<StepProps> = ({ onNext }) => {
-    React.useEffect(() => {
-        const timer = setTimeout(onNext, 3000);
-        return () => clearTimeout(timer);
-    }, [onNext]);
+export const GeneratingStep: React.FC<StepProps> = ({
+  onNext,
+  generatePlan,
+  isGenerating,
+  error,
+}) => {
+  useEffect(() => {
+    let cancelled = false;
 
-    return (
-        <Layout showBack={false} noPadding={true}>
-            <div className="h-full flex flex-col items-center justify-center p-8 bg-white">
-                <div className="w-48 h-48 bg-purple-50 rounded-full flex items-center justify-center mb-8 relative">
-                    <div className="absolute inset-0 border-4 border-t-black border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
-                    <div className="text-4xl animate-pulse">❤️</div>
-                    {/* Particles */}
-                    <motion.div animate={{ y: -20, opacity: 0 }} transition={{ repeat: Infinity, duration: 1.5 }} className="absolute top-10 right-10 text-xs">✨</motion.div>
-                    <motion.div animate={{ y: -20, opacity: 0 }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.5 }} className="absolute bottom-10 left-10 text-xs">✨</motion.div>
-                </div>
-                
-                <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 size={16} className="text-orange-500 fill-orange-100" />
-                    <span className="text-xs font-bold text-gray-500">AI done!</span>
-                </div>
-                
-                <h2 className="text-2xl font-bold text-center mb-12">Time to generate your custom plan!</h2>
-                
-                <StickyFooter>
-                    <Button disabled className="bg-black text-white">Continue</Button>
-                </StickyFooter>
-            </div>
-        </Layout>
-    );
+    const run = async () => {
+      try {
+        if (generatePlan) {
+          await generatePlan();
+        }
+        if (!cancelled) {
+          onNext();
+        }
+      } catch (e) {
+        console.error(e);
+        // Wenn Fehler, lassen wir den Nutzer auf diesem Screen, damit die Fehlermeldung sichtbar bleibt
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [generatePlan, onNext]);
+
+  return (
+    <Layout showBack={false} noPadding={true}>
+      <div className="h-full flex flex-col items-center justify-center p-8 bg-white">
+        {/*
+          Lass hier deinen bestehenden Spinner / Animation-Code so wie er ist.
+          Wichtig ist nur, dass du unten den Status-Text einfügst.
+        */}
+
+        <p className="mt-4 text-sm text-gray-500 text-center">
+          {isGenerating
+            ? 'We are generating your personalized calories and macros...'
+            : 'Finalizing your plan...'}
+        </p>
+
+        {error && (
+          <p className="mt-2 text-sm text-red-500 text-center">
+            {error}
+          </p>
+        )}
+      </div>
+    </Layout>
+  );
 };
+
 
 // 21. Email Signup (Simplified – ONLY email input)
 export const EmailSignupStep: React.FC<StepProps> = ({ data, updateData, onNext }) => {

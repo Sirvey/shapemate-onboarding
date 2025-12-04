@@ -2,6 +2,8 @@
 export type UnitSystem = 'imperial' | 'metric';
 
 export interface UserData {
+  firstName?: string;
+  lastName?: string;
   gender: string;
   workoutFrequency: string;
   source: string;
@@ -23,9 +25,15 @@ export interface UserData {
     workout: boolean;
   };
   email: string;
+
+  // Ergebnis aus Gemini
+  aiPlan?: NutritionPlan;
 }
 
+
 export const INITIAL_DATA: UserData = {
+  firstName: '',
+  lastName: '',
   gender: '',
   workoutFrequency: '',
   source: '',
@@ -44,13 +52,16 @@ export const INITIAL_DATA: UserData = {
   notificationPreferences: {
     weighing: true,
     meal: true,
-    workout: true
+    workout: true,
   },
-  email: ''
+  email: '',
+  aiPlan: undefined,
 };
+
 
 export enum StepType {
   WELCOME = 'WELCOME',
+  NAME = 'NAME',
   GENDER = 'GENDER',
   WORKOUTS = 'WORKOUTS',
   SOURCE = 'SOURCE',
@@ -73,4 +84,12 @@ export enum StepType {
   PAYWALL_HOOK = 'PAYWALL_HOOK',
   PAYWALL_TRIAL = 'PAYWALL_TRIAL',
   PAYWALL_PROMO = 'PAYWALL_PROMO'
+}
+
+export interface NutritionPlan {
+  maintenanceCalories: number;
+  targetCalories: number;
+  proteinGrams: number;
+  carbsGrams: number;
+  fatsGrams: number;
 }
