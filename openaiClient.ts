@@ -3,12 +3,9 @@ import { UserData, NutritionPlan } from "./types";
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
-export async function generateNutritionPlan(
-  userData: UserData
-): Promise<NutritionPlan> {
+export async function generateNutritionPlan(userData: UserData): Promise<NutritionPlan> {
   if (!OPENAI_API_KEY) {
-    console.error("Missing VITE_OPENAI_API_KEY");
-    throw new Error("OpenAI API key missing");
+    throw new Error("Missing VITE_OPENAI_API_KEY");
   }
 
   const prompt = `
@@ -27,7 +24,7 @@ ${JSON.stringify(userData, null, 2)}
 Return ONLY valid JSON. No markdown. No comments.
 `;
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${OPENAI_API_KEY}`,
@@ -35,13 +32,11 @@ Return ONLY valid JSON. No markdown. No comments.
     },
     body: JSON.stringify({
       model: "gpt-5.1",
-      input: prompt,
-      max_output_tokens: 500,
-
-      // THIS is the correct OpenAI spec
-      text_format: {
-        type: "json_object"
-      }
+      messages: [
+        { role: "system", content: "You are a nutrition calculation engine." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0,
     }),
   });
 
@@ -52,11 +47,10 @@ Return ONLY valid JSON. No markdown. No comments.
   }
 
   const json = await response.json();
-
-  const raw = json.output_text;
+  const raw = json.choices?.[0]?.message?.content;
 
   if (!raw) {
-    console.error("NO output_text returned:", json);
+    console.error("No content returned:", json);
     throw new Error("Invalid AI response");
   }
 
