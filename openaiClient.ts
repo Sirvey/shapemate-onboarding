@@ -31,7 +31,7 @@ Return ONLY valid JSON. No markdown. No comments.
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-5.1",
+      model: "gpt-5-nano",
       messages: [
         { role: "system", content: "You are a nutrition calculation engine." },
         { role: "user", content: prompt }
