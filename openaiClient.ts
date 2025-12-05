@@ -36,7 +36,7 @@ Return ONLY valid JSON. No markdown. No comments.
         { role: "system", content: "You are a nutrition calculation engine." },
         { role: "user", content: prompt }
       ],
-      temperature: 0,
+      // NO temperature here – nano does not support custom values!
     }),
   });
 
