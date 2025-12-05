@@ -10,7 +10,7 @@ import {
 } from './components/OnboardingSteps';
 import { ResultsStep, DashboardStep, PaywallHook, PaywallTrial, PaywallPromo } from './components/ComplexScreens';
 import { supabase } from './supabaseClient';
-import { generateNutritionPlan } from './geminiClient';
+import { generateNutritionPlan } from './openaiClient';
 
 
 // Hilfsfunktionen für Konvertierungen und Mapping
