@@ -1045,61 +1045,6 @@ export const ReferralStep: React.FC<StepProps> = ({ data, updateData, onNext, on
   );
 };
 
-// 18. Generating
-export const GeneratingStep: React.FC<StepProps> = ({
-  onNext,
-  generatePlan,
-  isGenerating,
-  error,
-}) => {
-  useEffect(() => {
-    let cancelled = false;
-
-    const run = async () => {
-      try {
-        if (generatePlan) {
-          await generatePlan();
-        }
-        if (!cancelled) {
-          onNext();
-        }
-      } catch (e) {
-        console.error(e);
-        // Wenn Fehler, lassen wir den Nutzer auf diesem Screen, damit die Fehlermeldung sichtbar bleibt
-      }
-    };
-
-    run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [generatePlan, onNext]);
-
-  return (
-    <Layout showBack={false} noPadding={true}>
-      <div className="h-full flex flex-col items-center justify-center p-8 bg-white">
-        {/*
-          Lass hier deinen bestehenden Spinner / Animation-Code so wie er ist.
-          Wichtig ist nur, dass du unten den Status-Text einfügst.
-        */}
-
-        <p className="mt-4 text-sm text-gray-500 text-center">
-          {isGenerating
-            ? 'We are generating your personalized calories and macros...'
-            : 'Finalizing your plan...'}
-        </p>
-
-        {error && (
-          <p className="mt-2 text-sm text-red-500 text-center">
-            {error}
-          </p>
-        )}
-      </div>
-    </Layout>
-  );
-};
-
 
 // 21. Email Signup (Simplified – ONLY email input)
 export const EmailSignupStep: React.FC<StepProps> = ({ data, updateData, onNext }) => {

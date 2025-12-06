@@ -2,56 +2,64 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { INITIAL_DATA, UserData, StepType } from './types';
+
 import {
-  WelcomeStep, NameStep, GenderStep, WorkoutsStep, SourceStep, InfoResultsStep, MeasurementsStep,
-  BirthdayStep, GoalStep, ObstaclesStep, DietStep, AccomplishStep,
-  TrustStep, ConnectAppsStep, RatingStep,
-  NotificationsStep, ReferralStep, GeneratingStep, EmailSignupStep
+  WelcomeStep, NameStep, GenderStep, WorkoutsStep, SourceStep, InfoResultsStep,
+  MeasurementsStep, BirthdayStep, GoalStep, ObstaclesStep, DietStep,
+  AccomplishStep, TrustStep, ConnectAppsStep, RatingStep,
+  NotificationsStep, ReferralStep, EmailSignupStep
 } from './components/OnboardingSteps';
-import { ResultsStep, DashboardStep, PaywallHook, PaywallTrial, PaywallPromo } from './components/ComplexScreens';
+
+import {
+  ResultsStep,
+  DashboardStep,
+  PaywallHook,
+  PaywallTrial,
+  PaywallPromo
+} from './components/ComplexScreens';
+
 import { supabase } from './supabaseClient';
 import { generateNutritionPlan } from './openaiClient';
 
 
-// Hilfsfunktionen für Konvertierungen und Mapping
+// -------------------------------------------------------------
+// Helpers
+// -------------------------------------------------------------
+
 const parseImperialHeightToCm = (value: string): number | null => {
   const match = value.match(/(\d+)\s*'\s*(\d+)\s*"?/);
   if (!match) return null;
   const feet = parseInt(match[1], 10);
   const inches = parseInt(match[2], 10);
-  const totalInches = feet * 12 + inches;
-  return Math.round(totalInches * 2.54);
+  return Math.round((feet * 12 + inches) * 2.54);
 };
 
 const convertWeightToKg = (weight: { value: string; unit: 'kg' | 'lbs' }): number | null => {
-  const numeric = parseFloat(weight.value);
-  if (Number.isNaN(numeric)) return null;
-  return weight.unit === 'kg'
-    ? numeric
-    : Math.round(numeric * 0.45359237 * 10) / 10;
+  const num = parseFloat(weight.value);
+  if (Number.isNaN(num)) return null;
+  return weight.unit === 'kg' ? num : Math.round(num * 0.45359237 * 10) / 10;
 };
 
-const mapGoalToCode = (goal: string | undefined): string | null => {
+const mapGoalToCode = (goal?: string): string | null => {
   switch (goal) {
-    case 'Lose weight':
-      return 'ziel_fettabbau';
-    case 'Maintain':
-      return 'ziel_allgemeinfitness';
-    case 'Gain weight':
-      return 'ziel_muskelaufbau';
-    default:
-      return null;
+    case 'Lose weight': return 'ziel_fettabbau';
+    case 'Maintain': return 'ziel_allgemeinfitness';
+    case 'Gain weight': return 'ziel_muskelaufbau';
+    default: return null;
   }
 };
 
-const mapGenderToCode = (gender: string | undefined): string | null => {
+const mapGenderToCode = (gender?: string): string | null => {
   if (gender === 'Male') return 'gender_m';
   if (gender === 'Female') return 'gender_w';
   return null;
 };
 
 
-// Steps definition array
+// -------------------------------------------------------------
+// Onboarding Flow  (NO GENERATING STEP ANYMORE)
+// -------------------------------------------------------------
+
 const FLOW = [
   StepType.WELCOME,
   StepType.NAME,
@@ -70,36 +78,37 @@ const FLOW = [
   StepType.RATING,
   StepType.NOTIFICATIONS,
   StepType.REFERRAL,
-  StepType.GENERATING,
+
+  // DIRECTLY → RESULTS (AI RUNS HERE)
   StepType.RESULTS,
+
   StepType.DASHBOARD,
   StepType.EMAIL_SIGNUP,
   StepType.PAYWALL_HOOK,
-  StepType.PAYWALL_TRIAL,
+  StepType.PAYWALL_TRIAL
 ];
+
 
 export default function App() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [userData, setUserData] = useState<UserData>(INITIAL_DATA);
-  const [showPromo, setShowPromo] = useState(false);
 
+  const [showPromo, setShowPromo] = useState(false);
   const [sender, setSender] = useState<string | null>(null);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Gemini States
+  // OpenAI states (formerly "Gemini")
   const [planLoading, setPlanLoading] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
 
-  // Token aus URL holen
+
+  // -------------------------------------------------------------
+  // Load Sender from registration_tokens
+  // -------------------------------------------------------------
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-
-    const token =
-      params.get('token') ||
-      params.get('t') ||
-      params.get('auth') ||
-      null;
+    const token = params.get('token') || params.get('t') || params.get('auth');
 
     if (!token) {
       setSubmitError('Missing token in onboarding link.');
@@ -118,40 +127,48 @@ export default function App() {
         return;
       }
 
-      setSender(data.sender as string);
+      setSender(data.sender);
     };
 
     loadSender();
   }, []);
 
+
+  // -------------------------------------------------------------
+  // Update Form Data
+  // -------------------------------------------------------------
   const updateData = (fields: Partial<UserData>) => {
     setUserData(prev => ({ ...prev, ...fields }));
   };
 
 
-  // GEMINI: Berechnung der Nährwerte
-  const runGeminiPlan = async () => {
+  // -------------------------------------------------------------
+  // OpenAI Nutrition Plan
+  // -------------------------------------------------------------
+  const runOpenAIPlan = async () => {
     try {
       setPlanLoading(true);
       setPlanError(null);
 
       const plan = await generateNutritionPlan(userData);
 
-      setUserData(prev => ({
-        ...prev,
-        aiPlan: plan,
-      }));
+      setUserData(prev => ({ ...prev, aiPlan: plan }));
+      return plan;
+
     } catch (e) {
       console.error(e);
-      setPlanError('We could not generate your personalized plan. Please try again.');
+      setPlanError("We could not generate your personalized plan. Please try again.");
       throw e;
+
     } finally {
       setPlanLoading(false);
     }
   };
 
 
-  // Speichern im Backend
+  // -------------------------------------------------------------
+  // Save onboarding → Supabase
+  // -------------------------------------------------------------
   const submitOnboardingToSupabase = async () => {
     if (!sender) return;
 
@@ -163,73 +180,73 @@ export default function App() {
 
       const heightCm =
         userData.height.unit === 'cm'
-          ? parseInt(userData.height.value || '0', 10)
-          : userData.height.unit === 'ft'
-            ? parseImperialHeightToCm(userData.height.value)
-            : null;
+          ? Number(userData.height.value)
+          : parseImperialHeightToCm(userData.height.value);
 
       const weightKg = convertWeightToKg(userData.weight);
 
+      // save base data
       const { error: stammdatenError } = await supabase
-        .from('stammdaten')
+        .from("stammdaten")
         .update({
-          name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+          name: `${userData.firstName || ""} ${userData.lastName || ""}`.trim(),
           gender: genderCode,
-          referral_source: userData.source || null,
+          referral_source: userData.source,
           groesse: heightCm,
-          geburtsdatum: userData.birthDate || null,
+          geburtsdatum: userData.birthDate,
           goal: mapGoalToCode(userData.goal),
-          diet: userData.diet || null,
-          referral_code: userData.referralCode || null,
-          mail: userData.email || null,
+          diet: userData.diet,
+          referral_code: userData.referralCode,
+          mail: userData.email,
         })
-        .eq('sender', sender);
+        .eq("sender", sender);
 
       if (stammdatenError) throw stammdatenError;
 
+      // save weight entry
       if (weightKg != null) {
         const { error: weightError } = await supabase
-          .from('user_weights')
-          .insert({
-            sender,
-            weight: weightKg,
-          });
+          .from("user_weights")
+          .insert({ sender, weight: weightKg });
+
         if (weightError) throw weightError;
       }
 
+      // notifications
       const prefs = userData.notificationPreferences;
-      const reminderMappings = [
-        { key: 'weighing', type: 'weighing' },
-        { key: 'meal', type: 'meal' },
-        { key: 'workout', type: 'workout' },
+      const reminderList = [
+        { type: "weighing", key: "weighing" },
+        { type: "meal", key: "meal" },
+        { type: "workout", key: "workout" },
       ];
 
-      for (const r of reminderMappings) {
-        const active = prefs[r.key] ? 'X' : null;
+      for (const row of reminderList) {
+        const { error } = await supabase
+          .from("erinnerungen")
+          .update({ active: prefs[row.key] ? "X" : null })
+          .eq("sender", sender)
+          .eq("type", row.type);
 
-        const { error: reminderError } = await supabase
-          .from('erinnerungen')
-          .update({ active })
-          .eq('sender', sender)
-          .eq('type', r.type);
-
-        if (reminderError) throw reminderError;
+        if (error) throw error;
       }
 
     } catch (err: any) {
-      setSubmitError(err.message || 'Unexpected error while saving onboarding data');
+      setSubmitError(err.message || "Unexpected error while saving onboarding data");
       throw err;
+
     } finally {
       setLoadingSubmit(false);
     }
   };
 
 
-  // nextStep Logik
+  // -------------------------------------------------------------
+  // Step Navigation
+  // -------------------------------------------------------------
   const nextStep = async () => {
-    const currentStepType = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
+    const current = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
 
-    if (currentStepType === StepType.EMAIL_SIGNUP) {
+    if (current === StepType.EMAIL_SIGNUP) {
       try {
         await submitOnboardingToSupabase();
       } catch {
@@ -238,26 +255,27 @@ export default function App() {
     }
 
     if (currentStepIndex < FLOW.length - 1) {
-      setCurrentStepIndex(prev => prev + 1);
+      setCurrentStepIndex(idx => idx + 1);
     } else {
-      alert('Flow completed');
+      alert("Flow completed");
     }
   };
 
   const prevStep = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex(prev => prev - 1);
-    }
+    if (currentStepIndex > 0) setCurrentStepIndex(idx => idx - 1);
   };
 
-  const triggerPromo = () => setShowPromo(true);
-
   const currentStepType = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
+  const triggerPromo = () => setShowPromo(true);
 
   const progress = Math.min(100, Math.round((currentStepIndex / 18) * 100));
 
+
+  // -------------------------------------------------------------
+  // Render Step
+  // -------------------------------------------------------------
   const renderStep = () => {
-    const commonProps = {
+    const props = {
       data: userData,
       updateData,
       onNext: nextStep,
@@ -266,43 +284,41 @@ export default function App() {
     };
 
     switch (currentStepType) {
-      case StepType.WELCOME: return <WelcomeStep {...commonProps} />;
-      case StepType.NAME: return <NameStep {...commonProps} />;
-      case StepType.GENDER: return <GenderStep {...commonProps} />;
-      case StepType.WORKOUTS: return <WorkoutsStep {...commonProps} />;
-      case StepType.SOURCE: return <SourceStep {...commonProps} />;
-      case StepType.INFO_RESULTS: return <InfoResultsStep {...commonProps} />;
-      case StepType.MEASUREMENTS: return <MeasurementsStep {...commonProps} />;
-      case StepType.BIRTHDAY: return <BirthdayStep {...commonProps} />;
-      case StepType.GOAL: return <GoalStep {...commonProps} />;
-      case StepType.OBSTACLES: return <ObstaclesStep {...commonProps} />;
-      case StepType.DIET: return <DietStep {...commonProps} />;
-      case StepType.ACCOMPLISHMENT: return <AccomplishStep {...commonProps} />;
-      case StepType.TRUST: return <TrustStep {...commonProps} />;
-      case StepType.CONNECT_APPS: return <ConnectAppsStep {...commonProps} />;
-      case StepType.RATING: return <RatingStep {...commonProps} />;
-      case StepType.NOTIFICATIONS: return <NotificationsStep {...commonProps} />;
-      case StepType.REFERRAL: return <ReferralStep {...commonProps} />;
+      case StepType.WELCOME: return <WelcomeStep {...props} />;
+      case StepType.NAME: return <NameStep {...props} />;
+      case StepType.GENDER: return <GenderStep {...props} />;
+      case StepType.WORKOUTS: return <WorkoutsStep {...props} />;
+      case StepType.SOURCE: return <SourceStep {...props} />;
+      case StepType.INFO_RESULTS: return <InfoResultsStep {...props} />;
+      case StepType.MEASUREMENTS: return <MeasurementsStep {...props} />;
+      case StepType.BIRTHDAY: return <BirthdayStep {...props} />;
+      case StepType.GOAL: return <GoalStep {...props} />;
+      case StepType.OBSTACLES: return <ObstaclesStep {...props} />;
+      case StepType.DIET: return <DietStep {...props} />;
+      case StepType.ACCOMPLISHMENT: return <AccomplishStep {...props} />;
+      case StepType.TRUST: return <TrustStep {...props} />;
+      case StepType.CONNECT_APPS: return <ConnectAppsStep {...props} />;
+      case StepType.RATING: return <RatingStep {...props} />;
+      case StepType.NOTIFICATIONS: return <NotificationsStep {...props} />;
+      case StepType.REFERRAL: return <ReferralStep {...props} />;
 
-      // *** HERE: Gemini is executed ***
-      case StepType.GENERATING:
+      // RESULTS now performs the AI call
+      case StepType.RESULTS:
         return (
-          <GeneratingStep
-            {...commonProps}
-            generatePlan={runGeminiPlan}
-            isGenerating={planLoading}
-            error={planError}
+          <ResultsStep
+            data={userData}
+            onNext={nextStep}
+            generatePlan={runOpenAIPlan}
+            planLoading={planLoading}
+            planError={planError}
           />
         );
-
-      case StepType.RESULTS:
-        return <ResultsStep data={userData} onNext={nextStep} />;
 
       case StepType.DASHBOARD:
         return <DashboardStep data={userData} onNext={nextStep} />;
 
       case StepType.EMAIL_SIGNUP:
-        return <EmailSignupStep {...commonProps} />;
+        return <EmailSignupStep {...props} />;
 
       case StepType.PAYWALL_HOOK:
         return <PaywallHook onNext={nextStep} />;
@@ -311,7 +327,7 @@ export default function App() {
         return <PaywallTrial onNext={nextStep} onBack={prevStep} onExit={triggerPromo} />;
 
       case StepType.PAYWALL_PROMO:
-        return <PaywallPromo onNext={() => alert('Offer claimed')} />;
+        return <PaywallPromo onNext={() => alert("Offer claimed")} />;
 
       default:
         return <div>Unknown step</div>;
@@ -319,8 +335,11 @@ export default function App() {
   };
 
 
+  // -------------------------------------------------------------
+  // Render App Shell
+  // -------------------------------------------------------------
   return (
-    <div className="bg-gray-50 min-h-screen flex items-center justify-center font-sans text-gray-900">
+    <div className="bg-gray-50 min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md h-screen bg-white shadow-2xl overflow-hidden relative">
 
         {submitError && (
@@ -331,16 +350,17 @@ export default function App() {
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={showPromo ? 'promo' : currentStepIndex}
+            key={showPromo ? "promo" : currentStepIndex}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.25 }}
-            className={`${loadingSubmit ? 'opacity-60 pointer-events-none' : ''} h-full`}
+            className={`${loadingSubmit ? "opacity-60 pointer-events-none" : ""} h-full`}
           >
             {renderStep()}
           </motion.div>
         </AnimatePresence>
+
       </div>
     </div>
   );

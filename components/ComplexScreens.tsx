@@ -13,6 +13,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { UserData } from "../types";
+import confetti from "canvas-confetti";
+import { generateNutritionPlan } from "../openaiClient";
 
 interface Props {
   data: UserData;
@@ -21,21 +23,66 @@ interface Props {
 }
 
 /* -------------------------------------------------------
-   19. RESULTS — "Loading bar" screen after Generating
+   19. RESULTS — replaced with async OpenAI loading + confetti
 ------------------------------------------------------- */
+
 export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
   const [progress, setProgress] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const plan = data.aiPlan;
-
+  // Start OpenAI generation immediately
   useEffect(() => {
-    const timer = setTimeout(() => setProgress(100), 600);
-    return () => clearTimeout(timer);
+    async function run() {
+      try {
+        const plan = await generateNutritionPlan(data);
+
+        // store plan inside user data
+        data.aiPlan = plan;
+
+        // allow progress to complete
+        setIsLoaded(true);
+      } catch (err) {
+        console.error("Failed to generate plan:", err);
+        setIsLoaded(true); // even on error progress should complete
+      }
+    }
+
+    run();
   }, []);
+
+  // Animate progress until 100% only after OpenAI is done
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    let current = 0;
+
+    const interval = setInterval(() => {
+      current += 4;
+
+      if (current >= 100) {
+        current = 100;
+        clearInterval(interval);
+
+        // confetti celebration
+        confetti({
+          particleCount: 120,
+          spread: 70,
+          origin: { y: 0.3 }
+        });
+
+        setShowSuccess(true);
+      }
+
+      setProgress(current);
+    }, 40);
+
+    return () => clearInterval(interval);
+  }, [isLoaded]);
 
   return (
     <Layout showBack={false} noPadding>
-      <div className="px-6 pt-4">
+      <div className="px-6 pt-4 pb-6">
         {/* Top Nav Indicators */}
         <div className="flex justify-between items-center mb-6">
           <button className="text-gray-400">
@@ -62,47 +109,42 @@ export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
               className="h-full bg-gradient-to-r from-red-400 to-blue-400"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
             />
           </div>
 
-          <p className="text-xs text-right text-gray-400 mt-1">
-            Finalizing your custom nutrition plan...
-          </p>
+          {!showSuccess && (
+            <p className="text-xs text-right text-gray-400 mt-1">
+              Finalizing your custom nutrition plan...
+            </p>
+          )}
         </div>
 
-        {/* Summary preview */}
-        <div className="bg-black text-white rounded-2xl p-6 mb-4">
-          <h3 className="text-xs text-gray-400 mb-4">
-            Daily recommendation for you
-          </h3>
+        {/* Success Box – no macro preview */}
+        {showSuccess && (
+          <div className="bg-black text-white rounded-2xl p-6 mt-6 text-center">
+            <h3 className="text-lg font-bold mb-1">Your plan is ready!</h3>
+            <p className="text-sm text-gray-300">
+              We’ve successfully calculated your calories and macros.
+            </p>
 
-          <div className="space-y-3">
-            {[
-              `Calories: ${plan?.targetCalories ?? "..."}`,
-              `Carbs: ${plan?.carbsGrams ?? "..."} g`,
-              `Protein: ${plan?.proteinGrams ?? "..."} g`,
-              `Fats: ${plan?.fatsGrams ?? "..."} g`,
-              "Health Score: AI estimated",
-            ].map((item) => (
-              <div
-                key={item}
-                className="flex justify-between items-center"
-              >
-                <span className="text-sm font-medium">{item}</span>
-                <CheckCircle2 size={16} className="text-white" />
-              </div>
-            ))}
+            <div className="flex justify-center mt-4">
+              <CheckCircle2 size={26} className="text-white" />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      <StickyFooter>
-        <Button onClick={onNext}>Continue</Button>
-      </StickyFooter>
+      {/* Continue Button only AFTER success */}
+      {showSuccess && (
+        <StickyFooter>
+          <Button onClick={onNext}>Continue</Button>
+        </StickyFooter>
+      )}
     </Layout>
   );
 };
+
 
 
 /* -------------------------------------------------------

@@ -21,7 +21,7 @@ Based on the following user profile, calculate:
 User profile:
 ${JSON.stringify(userData, null, 2)}
 
-Return ONLY valid JSON. No markdown. No comments.
+Return ONLY valid JSON. No markdown. No text. Just JSON.
 `;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -33,10 +33,10 @@ Return ONLY valid JSON. No markdown. No comments.
     body: JSON.stringify({
       model: "gpt-5-nano",
       messages: [
-        { role: "system", content: "You are a nutrition calculation engine." },
+        { role: "system", content: "You are a precise nutrition calculation engine." },
         { role: "user", content: prompt }
-      ],
-      // NO temperature here – nano does not support custom values!
+      ]
+      // no temperature allowed for nano
     }),
   });
 
@@ -50,7 +50,7 @@ Return ONLY valid JSON. No markdown. No comments.
   const raw = json.choices?.[0]?.message?.content;
 
   if (!raw) {
-    console.error("No content returned:", json);
+    console.error("AI response empty:", json);
     throw new Error("Invalid AI response");
   }
 
