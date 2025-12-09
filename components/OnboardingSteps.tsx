@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Repeat, Pizza, Clock, Lightbulb, X, AlertCircle } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { FcGoogle } from "react-icons/fc";
 
 interface StepProps {
   data: UserData;
@@ -109,14 +110,14 @@ export const NameStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack
 export const GenderStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
   return (
     <Layout 
-      title="Choose your Gender" 
-      subtitle="This will be used to calibrate your custom plan."
+      title="What's your Gender?" 
+      subtitle="This helps us calculate accurate calorie and macro goals."
       progress={progress}
       showBack={true}
       onBack={onBack}
     >
       <div className="mt-6 space-y-4">
-        {['Male', 'Female'].map((g) => (
+        {['Male', 'Female', 'Other', 'Prefer not to say'].map((g) => (
           <SelectCard 
             key={g} 
             label={g} 
@@ -280,7 +281,7 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
 
   return (
     <Layout
-      title="Height & weight"
+      title="Your Height & weight"
       subtitle="This will be used to calibrate your custom plan."
       progress={progress}
       onBack={onBack}
@@ -388,8 +389,8 @@ export const BirthdayStep: React.FC<StepProps> = ({ data, updateData, onNext, on
 
     return (
         <Layout
-            title="When were you born?"
-            subtitle="This will be used to calibrate your custom plan."
+            title="When's you birthday?"
+            subtitle="We only use this to calculate your age for health metrics and goals."
             progress={progress}
             onBack={onBack}
         >
@@ -1046,30 +1047,80 @@ export const ReferralStep: React.FC<StepProps> = ({ data, updateData, onNext, on
 };
 
 
-// 21. Email Signup (Simplified – ONLY email input)
+// 21. Email Signup (Email + Google Login)
 export const EmailSignupStep: React.FC<StepProps> = ({ data, updateData, onNext }) => {
+
+  // Google Signup Handler
+  const handleGoogleSignup = async () => {
+    const { data: signInData, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/auth/callback',
+      },
+    });
+
+    if (error) {
+      console.error("Google signup error:", error);
+      return;
+    }
+
+    // Wait for auth session to exist
+    const { data: sessionData } = await supabase.auth.getUser();
+
+    const email = sessionData?.user?.email;
+    if (!email) return;
+
+    // ---------------------------------------
+    // EXTRA: Save Google email to stammdaten
+    // ---------------------------------------
+    await supabase
+      .from("stammdaten")
+      .update({ mail: email })
+      .eq("sender", data.sender);
+    // ---------------------------------------
+
+    onNext();
+  };
+
   return (
     <Layout showBack={false} title="Save your progress">
       <div className="mt-12 flex flex-col gap-6 px-2">
 
-        {/* E-Mail Label */}
         <p className="text-gray-600 text-sm text-center px-4">
           Enter your email to save your progress and continue.
         </p>
 
         {/* Email Input */}
-        <Input 
+        <Input
           placeholder="Enter your email"
-          value={data.email} 
+          value={data.email}
           onChange={(e) => updateData({ email: e.target.value })}
           type="email"
         />
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-4">
+          <div className="h-px bg-gray-300 flex-1" />
+          <span className="text-xs text-gray-400 uppercase tracking-widest">or</span>
+          <div className="h-px bg-gray-300 flex-1" />
+        </div>
+
+        {/* Google Button */}
+        <Button 
+          variant="secondary"
+          fullWidth
+          onClick={handleGoogleSignup}
+          className="flex items-center justify-center gap-3 border border-gray-300 bg-white text-black"
+        >
+          <img src="/assets/google-icon.png" className="w-5 h-5" />
+          Continue with Google
+        </Button>
 
       </div>
 
       <StickyFooter>
         <Button 
-          onClick={onNext} 
+          onClick={onNext}
           disabled={!data.email || data.email.trim().length === 0}
         >
           Continue
@@ -1078,4 +1129,5 @@ export const EmailSignupStep: React.FC<StepProps> = ({ data, updateData, onNext 
     </Layout>
   );
 };
+
 
