@@ -4,9 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { INITIAL_DATA, UserData, StepType } from './types';
 
 import {
-  WelcomeStep, NameStep, GenderStep, WorkoutsStep, SourceStep, InfoResultsStep,
-  MeasurementsStep, BirthdayStep, GoalStep, ObstaclesStep, DietStep,
-  AccomplishStep, TrustStep, ConnectAppsStep, RatingStep,
+  WelcomeStep, NameStep, GenderStep, WorkoutsStep, SourceStep,
+  MeasurementsStep, BirthdayStep, GoalStep, DietStep, TrustStep, ConnectAppsStep, RatingStep,
   NotificationsStep, ReferralStep, EmailSignupStep
 } from './components/OnboardingSteps';
 
@@ -14,7 +13,6 @@ import {
   ResultsStep,
   DashboardStep,
   PaywallHook,
-  PaywallTrial,
   PaywallPromo
 } from './components/ComplexScreens';
 
@@ -66,13 +64,10 @@ const FLOW = [
   StepType.GENDER,
   StepType.WORKOUTS,
   StepType.SOURCE,
-  StepType.INFO_RESULTS,
   StepType.MEASUREMENTS,
   StepType.BIRTHDAY,
   StepType.GOAL,
-  StepType.OBSTACLES,
   StepType.DIET,
-  StepType.ACCOMPLISHMENT,
   StepType.TRUST,
   StepType.CONNECT_APPS,
   StepType.RATING,
@@ -85,7 +80,6 @@ const FLOW = [
   StepType.DASHBOARD,
   StepType.EMAIL_SIGNUP,
   StepType.PAYWALL_HOOK,
-  StepType.PAYWALL_TRIAL
 ];
 
 
@@ -289,13 +283,10 @@ export default function App() {
       case StepType.GENDER: return <GenderStep {...props} />;
       case StepType.WORKOUTS: return <WorkoutsStep {...props} />;
       case StepType.SOURCE: return <SourceStep {...props} />;
-      case StepType.INFO_RESULTS: return <InfoResultsStep {...props} />;
       case StepType.MEASUREMENTS: return <MeasurementsStep {...props} />;
       case StepType.BIRTHDAY: return <BirthdayStep {...props} />;
       case StepType.GOAL: return <GoalStep {...props} />;
-      case StepType.OBSTACLES: return <ObstaclesStep {...props} />;
       case StepType.DIET: return <DietStep {...props} />;
-      case StepType.ACCOMPLISHMENT: return <AccomplishStep {...props} />;
       case StepType.TRUST: return <TrustStep {...props} />;
       case StepType.CONNECT_APPS: return <ConnectAppsStep {...props} />;
       case StepType.RATING: return <RatingStep {...props} />;
@@ -321,10 +312,7 @@ export default function App() {
         return <EmailSignupStep {...props} />;
 
       case StepType.PAYWALL_HOOK:
-        return <PaywallHook onNext={nextStep} />;
-
-      case StepType.PAYWALL_TRIAL:
-        return <PaywallTrial onNext={nextStep} onBack={prevStep} onExit={triggerPromo} />;
+        return <PaywallHook onNext={triggerPromo} />;
 
       case StepType.PAYWALL_PROMO:
         return <PaywallPromo onNext={() => alert("Offer claimed")} />;

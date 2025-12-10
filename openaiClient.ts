@@ -9,7 +9,7 @@ export async function generateNutritionPlan(userData: UserData): Promise<Nutriti
   }
 
   const prompt = `
-You are ShapeMate's nutrition engine.
+You are Shapemate's nutrition engine.
 
 Based on the following user profile, calculate:
 - maintenanceCalories

@@ -3,3 +3,23 @@
   touch-action: pan-y !important; /* nur vertikal */
   overscroll-behavior-x: none !important; /* keine Bewegung zur Seite */
 }
+
+/* === Glow Loader Animations === */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-fast {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-spin-fast {
+  animation: spin-fast 1.4s linear infinite;
+}
+

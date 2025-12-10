@@ -261,10 +261,17 @@ interface ToggleProps {
 export const Toggle: React.FC<ToggleProps> = ({ checked, onChange }) => (
   <button 
     onClick={() => onChange(!checked)}
-    className={`w-14 h-8 rounded-full p-1 transition-colors duration-200 ease-in-out ${checked ? 'bg-black' : 'bg-gray-200'}`}
+    className={`
+      w-14 h-8 rounded-full p-1 transition-colors duration-200 ease-in-out 
+      ${checked ? 'bg-green-500' : 'bg-gray-200'}
+    `}
   >
     <div 
-      className={`bg-white w-6 h-6 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${checked ? 'translate-x-6' : 'translate-x-0'}`} 
+      className={`
+        bg-white w-6 h-6 rounded-full shadow-md transform transition-transform duration-200 ease-in-out 
+        ${checked ? 'translate-x-6' : 'translate-x-0'}
+      `}
     />
   </button>
 );
+

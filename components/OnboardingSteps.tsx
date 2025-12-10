@@ -5,14 +5,13 @@ import { UserData } from '../types';
 import { motion } from 'framer-motion';
 import { 
   Instagram, Facebook, Youtube, Monitor, Users, 
-  Target, Ban, Search, CheckCircle2, ChevronRight, Activity, 
+  Target, Ban, Search, CheckCircle2, ChevronRight, Activity, Fish, Salad, Leaf,
   Watch, Circle, Grip, LayoutGrid, Scale, Utensils, Dumbbell, Apple, Mail,
   Dot,
   EllipsisVertical
 } from 'lucide-react';
 import { Repeat, Pizza, Clock, Lightbulb, X, AlertCircle } from "lucide-react";
 import { supabase } from "../supabaseClient";
-import { FcGoogle } from "react-icons/fc";
 
 interface StepProps {
   data: UserData;
@@ -117,7 +116,7 @@ export const GenderStep: React.FC<StepProps> = ({ data, updateData, onNext, onBa
       onBack={onBack}
     >
       <div className="mt-6 space-y-4">
-        {['Male', 'Female', 'Other', 'Prefer not to say'].map((g) => (
+        {['Male', 'Female'].map((g) => (
           <SelectCard 
             key={g} 
             label={g} 
@@ -133,104 +132,159 @@ export const GenderStep: React.FC<StepProps> = ({ data, updateData, onNext, onBa
   );
 };
 
-// 1.5. Workouts (New)
-export const WorkoutsStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
+// 1.5 Workouts (Updated Modern Icon Design)
+export const WorkoutsStep: React.FC<StepProps> = ({
+  data,
+  updateData,
+  onNext,
+  onBack,
+  progress,
+}) => {
   const options = [
-    { value: '0-2', label: 'Occasional workouts', icon: <Dot size={20} className="fill-current"/> },
-    { value: '3-5', label: 'Regular workouts', icon: <EllipsisVertical size={20} className="fill-current"/> },
-    { value: '6+', label: 'Dedicated athlete', icon: <Grip size={20} className="fill-current"/> },
+    {
+      value: "0-2",
+      label: "Occasional workouts",
+      icon: (
+        <div
+          className="
+            w-10 h-10 
+            bg-white 
+            rounded-full 
+            flex items-center justify-center 
+            shadow-sm 
+            border border-gray-200
+          "
+        >
+          <Dot size={22} className="text-gray-700" />
+        </div>
+      ),
+    },
+    {
+      value: "3-5",
+      label: "Regular workouts",
+      icon: (
+        <div
+          className="
+            w-10 h-10 
+            bg-white 
+            rounded-full 
+            flex items-center justify-center 
+            shadow-sm 
+            border border-gray-200
+          "
+        >
+          <EllipsisVertical size={22} className="text-gray-700" />
+        </div>
+      ),
+    },
+    {
+      value: "6+",
+      label: "Dedicated athlete",
+      icon: (
+        <div
+          className="
+            w-10 h-10 
+            bg-white 
+            rounded-full 
+            flex items-center justify-center 
+            shadow-sm 
+            border border-gray-200
+          "
+        >
+          <Grip size={22} className="text-gray-700" />
+        </div>
+      ),
+    },
   ];
 
   return (
-    <Layout 
-      title="How many workouts do you do per week?" 
-      subtitle="This will be used to calibrate your custom plan."
+    <Layout
+      title="How many workouts do you do per week?"
+      subtitle="This helps us calibrate your fitness level."
       progress={progress}
       showBack={true}
       onBack={onBack}
     >
       <div className="mt-6 space-y-4">
         {options.map((opt) => (
-          <SelectCard 
-            key={opt.value} 
+          <SelectCard
+            key={opt.value}
             label={opt.value}
             subLabel={opt.label}
             icon={opt.icon}
-            selected={data.workoutFrequency === opt.value} 
-            onClick={() => updateData({ workoutFrequency: opt.value })} 
+            selected={data.workoutFrequency === opt.value}
+            onClick={() => updateData({ workoutFrequency: opt.value })}
             className="py-6"
           />
         ))}
       </div>
+
       <StickyFooter>
-        <Button onClick={onNext} disabled={!data.workoutFrequency}>Continue</Button>
+        <Button onClick={onNext} disabled={!data.workoutFrequency}>
+          Continue
+        </Button>
       </StickyFooter>
     </Layout>
   );
 };
 
-// 2. Source
-export const SourceStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
+
+// 2. Source (Updated Modern Icon Design)
+export const SourceStep: React.FC<StepProps> = ({
+  data,
+  updateData,
+  onNext,
+  onBack,
+  progress,
+}) => {
   const sources = [
-    { id: 'Instagram', icon: <Instagram /> },
-    { id: 'Facebook', icon: <Facebook /> },
-    { id: 'TikTok', icon: <span className="font-bold">Tk</span> },
-    { id: 'Youtube', icon: <Youtube /> },
-    { id: 'Google', icon: <Search /> },
-    { id: 'Friend or family', icon: <Users /> },
+    { id: "Instagram", icon: <Instagram size={20} className="text-gray-700" /> },
+    { id: "Facebook", icon: <Facebook size={20} className="text-gray-700" /> },
+    { id: "TikTok", icon: <span className="font-bold text-lg text-gray-700">Tk</span> },
+    { id: "Youtube", icon: <Youtube size={20} className="text-gray-700" /> },
+    { id: "Google", icon: <Search size={20} className="text-gray-700" /> },
+    { id: "Friend or family", icon: <Users size={20} className="text-gray-700" /> },
   ];
 
   return (
-    <Layout 
+    <Layout
       title="Where did you hear about us?"
       progress={progress}
       onBack={onBack}
     >
-      <div className="mt-6">
+      <div className="mt-6 space-y-4">
         {sources.map((s) => (
-          <SelectCard 
+          <SelectCard
             key={s.id}
             label={s.id}
-            icon={s.icon}
+            icon={
+              <div
+                className="
+                  w-10 h-10 
+                  bg-white 
+                  rounded-full 
+                  flex items-center justify-center
+                  shadow-sm 
+                  border border-gray-200
+                "
+              >
+                {s.icon}
+              </div>
+            }
             selected={data.source === s.id}
             onClick={() => updateData({ source: s.id })}
           />
         ))}
       </div>
+
       <StickyFooter>
-        <Button onClick={onNext} disabled={!data.source}>Continue</Button>
+        <Button onClick={onNext} disabled={!data.source}>
+          Continue
+        </Button>
       </StickyFooter>
     </Layout>
   );
 };
-
-
-
-// 4. Info Results (Static)
-export const InfoResultsStep: React.FC<StepProps> = ({ onNext, onBack, progress }) => (
-  <Layout 
-    title="Shapemate creates long-term results"
-    progress={progress}
-    onBack={onBack}
-  >
-
-    <div className="mt-10 rounded-xl p-6 border border-gray-200">
-        {/* Replace SVG with graph image */}
-        <div className="relative w-full flex items-center justify-center">
-          <img 
-            src="/assets/graph.png"
-            alt="Progress Graph"
-            className="w-full h-auto object-contain rounded-xl"
-          />
-        </div>
-    </div>
-
-    <StickyFooter>
-      <Button onClick={onNext}>Continue</Button>
-    </StickyFooter>
-
-  </Layout>
-);
 
 
 
@@ -435,33 +489,77 @@ export const BirthdayStep: React.FC<StepProps> = ({ data, updateData, onNext, on
 };
 
 
-// 7. Goal
-export const GoalStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
-
+// 7. Goal (redesigned with matching icon style)
+export const GoalStep: React.FC<StepProps> = ({
+  data,
+  updateData,
+  onNext,
+  onBack,
+  progress,
+}) => {
   const goals = [
     {
       id: "Lose weight",
       label: "Fat Loss",
       sub: "Reduce body fat effectively",
-      icon: <Scale className="w-6 h-6" />
+      icon: (
+        <div
+          className="
+            w-10 h-10 
+            bg-white 
+            rounded-full 
+            flex items-center justify-center
+            shadow-sm 
+            border border-gray-200
+          "
+        >
+          <Scale size={20} className="text-gray-700" />
+        </div>
+      ),
     },
     {
       id: "Maintain",
       label: "General Fitness",
       sub: "Improve overall health",
-      icon: <Activity className="w-6 h-6" />
+      icon: (
+        <div
+          className="
+            w-10 h-10 
+            bg-white 
+            rounded-full 
+            flex items-center justify-center
+            shadow-sm 
+            border border-gray-200
+          "
+        >
+          <Activity size={20} className="text-gray-700" />
+        </div>
+      ),
     },
     {
       id: "Gain weight",
       label: "Muscle Building",
       sub: "Build lean muscle mass",
-      icon: <Dumbbell className="w-6 h-6" />
-    }
+      icon: (
+        <div
+          className="
+            w-10 h-10 
+            bg-white 
+            rounded-full 
+            flex items-center justify-center
+            shadow-sm 
+            border border-gray-200
+          "
+        >
+          <Dumbbell size={20} className="text-gray-700" />
+        </div>
+      ),
+    },
   ];
 
   return (
-    <Layout 
-      title="What is your goal?" 
+    <Layout
+      title="What is your goal?"
       subtitle="This helps us generate a plan tailored just for you."
       progress={progress}
       onBack={onBack}
@@ -489,107 +587,86 @@ export const GoalStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack
 };
 
 
-// 8. Obstacles
-export const ObstaclesStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
 
-    const obstacles = [
-        {
-            label: 'Lack of consistency',
-            icon: Repeat
-        },
-        {
-            label: 'Unhealthy eating habits',
-            icon: Pizza
-        },
-        {
-            label: 'Lack of support',
-            icon: Users
-        },
-        {
-            label: 'Busy schedule',
-            icon: Clock
-        },
-        {
-            label: 'Lack of meal inspiration',
-            icon: Lightbulb
-        }
-    ];
+// 9. Diet (Redesigned to match modern icon card style)
 
-    const toggle = (obs: string) => {
-        const newObs = data.obstacles.includes(obs) 
-            ? data.obstacles.filter(o => o !== obs)
-            : [...data.obstacles, obs];
-        updateData({ obstacles: newObs });
-    };
+export const DietStep: React.FC<StepProps> = ({
+  data,
+  updateData,
+  onNext,
+  onBack,
+  progress,
+}) => {
+  const diets = [
+    {
+      id: "Classic",
+      label: "Classic",
+      sub: "No specific dietary restriction",
+      icon: <Utensils size={20} className="text-gray-700" />,
+    },
+    {
+      id: "Pescatarian",
+      label: "Pescatarian",
+      sub: "Fish, plant-based foods",
+      icon: <Fish size={20} className="text-gray-700" />,
+    },
+    {
+      id: "Vegetarian",
+      label: "Vegetarian",
+      sub: "Plant-based, no meat",
+      icon: <Salad size={20} className="text-gray-700" />,
+    },
+    {
+      id: "Vegan",
+      label: "Vegan",
+      sub: "Strictly plant-based",
+      icon: <Leaf size={20} className="text-gray-700" />,
+    },
+  ];
 
-    return (
-        <Layout title="What's stopping you from reaching your goals?" progress={progress} onBack={onBack}>
-            <div className="mt-6 space-y-4">
-                {obstacles.map(({ label, icon: Icon }) => {
-                    const selected = data.obstacles.includes(label);
-                    return (
-                        <SelectCard
-                            key={label}
-                            label={label}
-                            icon={
-                                <Icon 
-                                    size={20} 
-                                    className={selected ? "text-white" : "text-gray-500"} 
-                                />
-                            }
-                            selected={selected}
-                            onClick={() => toggle(label)}
-                        />
-                    );
-                })}
-            </div>
+  return (
+    <Layout
+      title="Do you follow a specific diet?"
+      subtitle="This helps us tailor your nutrition plan."
+      progress={progress}
+      onBack={onBack}
+    >
+      <div className="mt-6 space-y-4">
+        {diets.map((d) => (
+          <SelectCard
+            key={d.id}
+            label={d.label}
+            subLabel={d.sub}
+            icon={
+              <div
+                className="
+                  w-10 h-10 
+                  bg-white 
+                  rounded-full 
+                  flex items-center justify-center
+                  shadow-sm 
+                  border border-gray-200
+                "
+              >
+                {d.icon}
+              </div>
+            }
+            selected={data.diet === d.id}
+            onClick={() => updateData({ diet: d.id })}
+          />
+        ))}
+      </div>
 
-            <StickyFooter>
-                <Button onClick={onNext} disabled={data.obstacles.length === 0}>
-                    Continue
-                </Button>
-            </StickyFooter>
-        </Layout>
-    );
+      <StickyFooter>
+        <Button onClick={onNext} disabled={!data.diet}>
+          Continue
+        </Button>
+      </StickyFooter>
+    </Layout>
+  );
 };
 
-// 9. Diet
-export const DietStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => (
-    <Layout title="Do you follow a specific diet?" progress={progress} onBack={onBack}>
-        <div className="mt-6 space-y-4">
-            {[
-                { l: 'Classic', i: '🍗' },
-                { l: 'Pescatarian', i: '🐟' },
-                { l: 'Vegetarian', i: '🥗' },
-                { l: 'Vegan', i: '🌱' },
-            ].map(d => (
-                <SelectCard key={d.l} label={d.l} icon={<span className="text-xl">{d.i}</span>} selected={data.diet === d.l} onClick={() => updateData({ diet: d.l })} />
-            ))}
-        </div>
-        <StickyFooter>
-          <Button onClick={onNext} disabled={!data.diet}>Continue</Button>
-        </StickyFooter>
-    </Layout>
-);
 
-// 10. Accomplish
-export const AccomplishStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => (
-    <Layout title="What would you like to accomplish?" progress={progress} onBack={onBack}>
-        <div className="mt-6 space-y-4">
-            {[
-                { l: 'Eat and live healthier', i: '🍎' },
-                { l: 'Boost my energy and mood', i: '✨' },
-                { l: 'Stay motivated and consistent', i: '💪' },
-                { l: 'Feel better about my body', i: '🧘' },
-            ].map(d => (
-                <SelectCard key={d.l} label={d.l} icon={<span className="text-xl">{d.i}</span>} selected={data.accomplishment === d.l} onClick={() => updateData({ accomplishment: d.l })} />
-            ))}
-        </div>
-        <StickyFooter>
-          <Button onClick={onNext} disabled={!data.accomplishment}>Continue</Button>
-        </StickyFooter>
-    </Layout>
-);
 
 // 11. Trust (Legal consent)
 export const TrustStep: React.FC<StepProps> = ({ onNext, onBack, progress }) => {
@@ -650,21 +727,31 @@ export const TrustStep: React.FC<StepProps> = ({ onNext, onBack, progress }) => 
 
 
 export const ConnectAppsStep: React.FC<StepProps> = ({ onNext, onBack, progress }) => {
-  const leftApps = [{ src: "/assets/strava.png", alt: "Strava" }];
-  const rightApps = [{ src: "/assets/whoopDark.png", alt: "Whoop" }];
+  const leftApps = [
+    { src: "/assets/strava.png", alt: "Strava" },
+    { src: "/assets/garminlight.png", alt: "Garmin" },
+    { src: "/assets/whoopDark.png", alt: "Whoop" }
+  ];
+
+  const rightApps = [
+    { src: "/assets/applehealthlight.png", alt: "Apple Health" },
+    { src: "/assets/zwift.png", alt: "Zwift" },
+    { src: "/assets/runnalight.png", alt: "Runna" }
+  ];
 
   return (
     <Layout
-      title="Connect to Strava or Whoop"
-      subtitle="Sync your daily activity between ShapeMate and your fitness apps."
+      title="Connect your apps"
+      subtitle="For even smarter recommendations you can sync your fitness apps. Just type Whoop or Strava in the chat."
       progress={progress}
       onBack={onBack}
     >
       <div className="mt-10 px-5">
-        <motion.div
+        {/* ---- CARD EXACTLY AS WEBSITE ---- */}
+        <div
           className="relative rounded-xl border border-[#D3D3D6]
-            bg-[#F6F2F2] p-6 shadow-[0_10px_20px_rgba(31,61,43,0.15)]
-            backdrop-blur-md overflow-hidden w-full h-[300px]"
+          bg-[#F6F2F2] p-6 shadow-[0_10px_20px_rgba(31,61,43,0.15)]
+          backdrop-blur-md overflow-hidden w-full h-[300px]"
         >
           {/* curved connectors */}
           <svg
@@ -681,98 +768,100 @@ export const ConnectAppsStep: React.FC<StepProps> = ({ onNext, onBack, progress 
               </linearGradient>
             </defs>
 
-            {/* left curved line */}
-            <motion.path
-              d="M120 130 C200 130, 250 130, 300 130"
-              stroke="url(#flowLine)"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              fill="none"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            />
+            {/* left curved lines */}
+            {leftApps.map((_, i) => {
+              const y = 70 + i * 70;
+              return (
+                <motion.path
+                  key={`l-${i}`}
+                  d={`M110 ${y} C200 130, 250 130, 300 130`}
+                  stroke="url(#flowLine)"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  fill="none"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.8, delay: 0.2 * i, ease: "easeOut" }}
+                />
+              );
+            })}
 
-            {/* right curved line */}
-            <motion.path
-              d="M300 130 C350 130, 400 130, 480 130"
-              stroke="url(#flowLine)"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              fill="none"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-            />
+            {/* right curved lines */}
+            {rightApps.map((_, i) => {
+              const y = 70 + i * 70;
+              return (
+                <motion.path
+                  key={`r-${i}`}
+                  d={`M300 130 C350 130, 400 ${y}, 490 ${y}`}
+                  stroke="url(#flowLine)"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  fill="none"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.8, delay: 0.2 * i, ease: "easeOut" }}
+                />
+              );
+            })}
           </svg>
 
-          {/* left icon */}
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col">
+          {/* left icons */}
+          <div className="absolute left-10 top-1/2 -translate-y-1/2 flex flex-col justify-between h-[210px]">
             {leftApps.map((app, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + i * 0.2 }}
-                className="w-16 h-16 rounded-xl bg-white flex items-center justify-center
-                  shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-[#E5E5E5]"
+                className="w-14 h-14 rounded-xl bg-white flex items-center justify-center
+                shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-[#E5E5E5]"
               >
-                <img
-                  src={app.src}
-                  alt={app.alt}
-                  className="w-8 h-8 object-contain"
-                />
+                <img src={app.src} alt={app.alt} className="w-7 h-7 object-contain" />
               </motion.div>
             ))}
           </div>
 
-          {/* right icon */}
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col">
+          {/* right icons */}
+          <div className="absolute right-10 top-1/2 -translate-y-1/2 flex flex-col justify-between h-[210px]">
             {rightApps.map((app, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + i * 0.2 }}
-                className="w-16 h-16 rounded-xl bg-white flex items-center justify-center
-                  shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-[#E5E5E5]"
+                className="w-14 h-14 rounded-xl bg-white flex items-center justify-center
+                shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-[#E5E5E5]"
               >
-                <img
-                  src={app.src}
-                  alt={app.alt}
-                  className="w-8 h-8 object-contain"
-                />
+                <img src={app.src} alt={app.alt} className="w-7 h-7 object-contain" />
               </motion.div>
             ))}
           </div>
 
-          {/* center Shapemate icon */}
+          {/* center WhatsApp icon */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2
-              w-20 h-20 bg-white rounded-xl flex items-center justify-center
-              shadow-[0_8px_16px_rgba(0,0,0,0.08)] border border-[#E5E5E5]"
+            className="absolute left-[40%] top-[40%] -translate-x-1/2 -translate-y-1/2
+            w-16 h-16 bg-white rounded-xl flex items-center justify-center
+            shadow-[0_8px_16px_rgba(37,211,102,0.25)] border border-[#E5E5E5]"
           >
-            <img
-              src="/assets/logoDark.png"
-              alt="ShapeMate"
-              className="w-10 h-10 object-contain"
-            />
+            <img src="/assets/whatsapp.png" alt="WhatsApp" className="w-8 h-8 object-contain" />
           </motion.div>
 
           {/* center glow */}
-          <div className="absolute inset-0 rounded-xl 
-            bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.06),transparent_70%)]" />
-        </motion.div>
+          <div className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_center,rgba(37,211,102,0.06),transparent_70%)]" />
+        </div>
+
+        {/* INFO TEXT */}
+        <p className="text-xs text-gray-500 text-center mt-4 px-4 leading-relaxed">
+          Whoop and Strava are supported. <br /> More integrations are coming soon.
+        </p>
       </div>
 
+      {/* Continue button ONLY */}
       <StickyFooter>
-        <div className="space-y-3">
-          <Button onClick={onNext}>Continue</Button>
-          <Button variant="ghost" onClick={onNext}>Not now</Button>
-        </div>
+        <Button onClick={onNext}>Continue</Button>
       </StickyFooter>
     </Layout>
   );
@@ -782,72 +871,135 @@ export const ConnectAppsStep: React.FC<StepProps> = ({ onNext, onBack, progress 
 
 
 
-// 15. Rating (Rebuilt exactly like screenshot)
-export const RatingStep: React.FC<StepProps> = ({ onNext, onBack, progress }) => (
-  <Layout title="Our Rating" progress={progress} onBack={onBack}>
-    <div className="flex flex-col items-center w-full">
 
-      {/* Rating Box */}
-      <div className="mt-10 w-full px-6">
-        <div className="w-full bg-white border border-gray-200 rounded-3xl py-5 px-6 flex flex-col items-center shadow-sm">
 
-          {/* Top rating row */}
-          <div className="flex items-center gap-3 mb-1">
-            <img src="/assets/laurel-left.png" alt="" className="w-6 opacity-80" />
-            <span className="text-xl font-semibold text-gray-800">4.8</span>
-            <span className="text-xl text-[#D09000]">★★★★★</span>
-            <img src="/assets/laurel-right.png" alt="" className="w-6 opacity-80" />
-          </div>
 
-          <p className="text-xs text-gray-500 font-medium">200+ Mates</p>
+
+export const RatingStep: React.FC<StepProps> = ({ onNext, onBack, progress }) => {
+  const testimonials = [
+    {
+      text: "Shapemate completely changed the way I manage my workouts and nutrition - zero friction.",
+      author: "Alex R.",
+      handle: "@alexfit",
+      img: "https://randomuser.me/api/portraits/men/33.jpg"
+    },
+    {
+      text: "The simplest and most beautiful way to stay consistent. Logging on WhatsApp feels natural.",
+      author: "Sophie M.",
+      handle: "@sophiemoves",
+      img: "https://randomuser.me/api/portraits/women/45.jpg"
+    },
+    {
+      text: "I love how smooth everything - meals, workouts and habits - effortless.",
+      author: "Daniel W.",
+      handle: "@danielhybrid",
+      img: "https://randomuser.me/api/portraits/men/36.jpg"
+    },
+    {
+      text: "The UI is gorgeous. It motivates me to open it every day. That’s rare for fitness apps.",
+      author: "Clara L.",
+      handle: "@clararuns",
+      img: "https://randomuser.me/api/portraits/women/55.jpg"
+    },
+    {
+      text: "Health & Fitness + WhatsApp = perfection. I never forget to log or train anymore.",
+      author: "Leo M.",
+      handle: "@leobuilds",
+      img: "https://randomuser.me/api/portraits/men/49.jpg"
+    },
+    {
+      text: "Finally, a product that feels personal. Shapemate sounds like an actual coach.",
+      author: "Lena K.",
+      handle: "@lenaruns",
+      img: "https://randomuser.me/api/portraits/women/65.jpg"
+    }
+  ];
+
+  const longTrack = [...testimonials, ...testimonials];
+
+  return (
+    <Layout title="Still not convinced?" progress={progress} onBack={onBack}>
+      <div className="flex flex-col items-center w-full">
+
+        {/* --- LOGO statt Rating Box --- */}
+        <div className="mt-10 w-full px-6 flex justify-center">
+          <img
+            src="/assets/logoBig.png"
+            className="w-40 h-auto opacity-90"
+            alt="Shapemate Logo"
+          />
+        </div>
+
+        {/* Smooth Infinite Auto-Scrolling Testimonials */}
+        <div className="relative overflow-hidden h-[360px] w-full px-6 mt-12">
+          <motion.div
+            className="flex flex-col gap-4"
+            animate={{ y: ["0%", "-50%"] }}
+            transition={{
+              duration: 50,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          >
+            {longTrack.map((t, i) => (
+              <div
+                key={`a-${i}`}
+                className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <img src={t.img} className="w-10 h-10 rounded-full object-cover" />
+                    <div>
+                      <span className="font-semibold text-gray-900 text-sm">{t.author}</span>
+                      <p className="text-xs text-gray-500">{t.handle}</p>
+                    </div>
+                  </div>
+                  <span className="text-[#D09000] text-base">★★★★★</span>
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  "{t.text}"
+                </p>
+              </div>
+            ))}
+
+            {longTrack.map((t, i) => (
+              <div
+                key={`b-${i}`}
+                className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <img src={t.img} className="w-10 h-10 rounded-full object-cover" />
+                    <div>
+                      <span className="font-semibold text-gray-900 text-sm">{t.author}</span>
+                      <p className="text-xs text-gray-500">{t.handle}</p>
+                    </div>
+                  </div>
+                  <span className="text-[#D09000] text-base">★★★★★</span>
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  "{t.text}"
+                </p>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Fades */}
+          <div className="pointer-events-none absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-white via-white/80 to-transparent" />
+          <div className="pointer-events-none absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-white via-white/80 to-transparent" />
         </div>
       </div>
 
-      {/* Headline */}
-      <h2 className="mt-14 text-2xl font-bold text-center text-black px-6 leading-snug">
-        Shapemate was made for<br />people like you
-      </h2>
+      <StickyFooter>
+        <Button onClick={onNext}>Continue</Button>
+      </StickyFooter>
+    </Layout>
+  );
+};
 
-      {/* User Images */}
-      <div className="flex items-center gap-3 mt-6 mb-2">
-        <img src="https://picsum.photos/80?1" className="w-14 h-14 rounded-full object-cover" />
-        <img src="https://picsum.photos/80?2" className="w-14 h-14 rounded-full object-cover" />
-        <img src="https://picsum.photos/80?3" className="w-14 h-14 rounded-full object-cover" />
-      </div>
 
-      <p className="text-xs text-gray-500 mb-10 font-medium"> Our Users</p>
 
-      {/* Review Card */}
-      <div className="w-full px-6">
-        <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm">
-          
-          {/* User header */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <img
-                src="https://picsum.photos/200/200?random=92"
-                className="w-10 h-10 rounded-full object-cover"
-              />
-              <span className="font-semibold text-gray-900 text-sm">Jake Sullivan</span>
-            </div>
 
-            <span className="text-[#D09000] text-base">★★★★★</span>
-          </div>
-
-          {/* Review Text */}
-          <p className="text-gray-600 text-sm leading-relaxed">
-            I lost 15 lbs in 2 months. I was about to go on Ozempic but decided to give this app a shot and it worked :)
-          </p>
-        </div>
-      </div>
-
-    </div>
-
-    <StickyFooter>
-      <Button onClick={onNext}>Continue</Button>
-    </StickyFooter>
-  </Layout>
-);
 
 
 // 16. Notifications (Updated with Info Text)
@@ -871,7 +1023,7 @@ export const NotificationsStep: React.FC<StepProps> = ({ data, updateData, onNex
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm">
               <Scale size={20} />
             </div>
-            <span className="font-bold text-lg">Weighing</span>
+            <span className="font-bold text-sm">Weighing</span>
           </div>
           <Toggle checked={data.notificationPreferences.weighing} onChange={() => toggle('weighing')} />
         </div>
@@ -882,7 +1034,7 @@ export const NotificationsStep: React.FC<StepProps> = ({ data, updateData, onNex
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm">
               <Utensils size={20} />
             </div>
-            <span className="font-bold text-lg">Meal Tracking</span>
+            <span className="font-bold text-sm">Meal Tracking</span>
           </div>
           <Toggle checked={data.notificationPreferences.meal} onChange={() => toggle('meal')} />
         </div>
@@ -893,7 +1045,7 @@ export const NotificationsStep: React.FC<StepProps> = ({ data, updateData, onNex
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm">
               <Dumbbell size={20} />
             </div>
-            <span className="font-bold text-lg">Workout Tracking</span>
+            <span className="font-bold text-sm">Workout Tracking</span>
           </div>
           <Toggle checked={data.notificationPreferences.workout} onChange={() => toggle('workout')} />
         </div>
@@ -1047,47 +1199,20 @@ export const ReferralStep: React.FC<StepProps> = ({ data, updateData, onNext, on
 };
 
 
-// 21. Email Signup (Email + Google Login)
+// 21. Email Signup (Simple Email Input Only)
 export const EmailSignupStep: React.FC<StepProps> = ({ data, updateData, onNext }) => {
+  const email = data.email?.trim() || "";
 
-  // Google Signup Handler
-  const handleGoogleSignup = async () => {
-    const { data: signInData, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/auth/callback',
-      },
-    });
-
-    if (error) {
-      console.error("Google signup error:", error);
-      return;
-    }
-
-    // Wait for auth session to exist
-    const { data: sessionData } = await supabase.auth.getUser();
-
-    const email = sessionData?.user?.email;
-    if (!email) return;
-
-    // ---------------------------------------
-    // EXTRA: Save Google email to stammdaten
-    // ---------------------------------------
-    await supabase
-      .from("stammdaten")
-      .update({ mail: email })
-      .eq("sender", data.sender);
-    // ---------------------------------------
-
-    onNext();
-  };
+  // Basic email regex (simpel + zuverlässig)
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   return (
     <Layout showBack={false} title="Save your progress">
       <div className="mt-12 flex flex-col gap-6 px-2">
 
+        {/* Description */}
         <p className="text-gray-600 text-sm text-center px-4">
-          Enter your email to save your progress and continue.
+          Enter your email to save your progress.
         </p>
 
         {/* Email Input */}
@@ -1098,30 +1223,21 @@ export const EmailSignupStep: React.FC<StepProps> = ({ data, updateData, onNext 
           type="email"
         />
 
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-4">
-          <div className="h-px bg-gray-300 flex-1" />
-          <span className="text-xs text-gray-400 uppercase tracking-widest">or</span>
-          <div className="h-px bg-gray-300 flex-1" />
-        </div>
-
-        {/* Google Button */}
-        <Button 
-          variant="secondary"
-          fullWidth
-          onClick={handleGoogleSignup}
-          className="flex items-center justify-center gap-3 border border-gray-300 bg-white text-black"
-        >
-          <img src="/assets/google-icon.png" className="w-5 h-5" />
-          Continue with Google
-        </Button>
+        {/* Modern Error Message */}
+        {email.length > 0 && !isValidEmail && (
+          <div className="text-center">
+            <p className="text-red-500 text-xs font-medium bg-red-50 py-2 px-3 rounded-xl inline-block shadow-sm border border-red-200">
+              Please enter a valid email address.
+            </p>
+          </div>
+        )}
 
       </div>
 
       <StickyFooter>
-        <Button 
+        <Button
           onClick={onNext}
-          disabled={!data.email || data.email.trim().length === 0}
+          disabled={!isValidEmail}
         >
           Continue
         </Button>
@@ -1129,5 +1245,7 @@ export const EmailSignupStep: React.FC<StepProps> = ({ data, updateData, onNext 
     </Layout>
   );
 };
+
+
 
 
