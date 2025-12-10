@@ -163,7 +163,7 @@ export const Input: React.FC<InputProps> = ({ label, className = '', ...props })
   </div>
 );
 
-// --- Scroll Picker (iOS Style) ---
+// --- Scroll Picker (iOS Style, but with your design) ---
 interface ScrollPickerProps {
   items: (string | number)[];
   value: string | number;
@@ -171,86 +171,112 @@ interface ScrollPickerProps {
   label?: string;
 }
 
-export const ScrollPicker: React.FC<ScrollPickerProps> = ({ items, value, onChange, label }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const itemHeight = 48; // h-12
-  const isScrolling = useRef(false);
+export const ScrollPicker: React.FC<ScrollPickerProps> = ({
+  items,
+  value,
+  onChange,
+  label
+}) => {
+  const ITEM_HEIGHT = 56; // größer wie im Screenshot
+  const VISIBLE_ITEMS = 5;
+  const CENTER_INDEX = Math.floor(VISIBLE_ITEMS / 2);
 
-  // Initialize scroll position
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+
+  const paddingHeight = ITEM_HEIGHT * CENTER_INDEX;
+
+  // Set scroll position when value changes (but not while scrolling)
   useEffect(() => {
-    if (containerRef.current && !isScrolling.current) {
-      const index = items.indexOf(value);
-      if (index !== -1) {
-        containerRef.current.scrollTop = index * itemHeight;
-      }
+    if (!containerRef.current || isScrolling) return;
+
+    const index = items.indexOf(value);
+    if (index !== -1) {
+      containerRef.current.scrollTop = index * ITEM_HEIGHT;
     }
-  }, [value, items]);
+  }, [value]);
 
   const handleScroll = () => {
-    if (containerRef.current) {
-      isScrolling.current = true;
-      const scrollTop = containerRef.current.scrollTop;
-      const index = Math.round(scrollTop / itemHeight);
-      const boundedIndex = Math.max(0, Math.min(index, items.length - 1));
-      
-      // Debounce the update slightly to avoid jitter, or update immediately if performance is fine
-      if (items[boundedIndex] !== value) {
-        onChange(items[boundedIndex]);
-      }
-      
-      // Reset scrolling flag after a delay (simplified)
-      setTimeout(() => { isScrolling.current = false; }, 150);
+    if (!containerRef.current) return;
+
+    setIsScrolling(true);
+
+    const index = Math.round(containerRef.current.scrollTop / ITEM_HEIGHT);
+    const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
+
+    if (items[clampedIndex] !== value) {
+      onChange(items[clampedIndex]);
     }
+
+    setTimeout(() => setIsScrolling(false), 120);
   };
 
   return (
-  <div 
-    className="relative h-48 w-full overflow-hidden touch-none"
-  >
+    <div className="relative w-full h-[280px] overflow-hidden">
+      {/* Highlighted center selection area */}
+      <div
+        className="absolute left-0 right-0 z-10 pointer-events-none rounded-xl"
+        style={{
+          top: `calc(50% - ${ITEM_HEIGHT / 2}px)`,
+          height: ITEM_HEIGHT,
+          background: "rgba(0,0,0,0.04)" // leicht wie bei dir
+        }}
+      />
 
-      {/* Selection Highlight (Center) */}
-      <div className="absolute top-[calc(50%-24px)] left-0 right-0 h-12 bg-gray-100 rounded-xl -z-10 pointer-events-none" />
-      
-      {/* Gradients */}
-      <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none z-10" />
-      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none z-10" />
+      {/* Top gradient */}
+      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none z-10" />
 
-      {/* Scroll Container */}
-      <div 
-  ref={containerRef}
-  onScroll={handleScroll}
-  className="
-    h-full 
-    overflow-y-scroll 
-    overflow-x-hidden 
-    snap-y snap-mandatory 
-    no-scrollbar 
-    py-[calc(60%-24px)]
-    touch-pan-y 
-    select-none
-  "
-  style={{ 
-    scrollBehavior: 'smooth',
-    touchAction: 'pan-y !important',
-    WebkitOverflowScrolling: 'touch'
-  }}
->
+      {/* Bottom gradient */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none z-10" />
 
+      {/* Scroll container */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="
+          h-full w-full 
+          overflow-y-auto overflow-x-hidden 
+          snap-y snap-mandatory 
+          no-scrollbar 
+          scroll-smooth 
+          touch-pan-y select-none
+        "
+        style={{
+          paddingTop: paddingHeight,
+          paddingBottom: paddingHeight
+        }}
+      >
+        {items.map((item, i) => {
+          const selected = item === value;
 
-        {items.map((item, i) => (
-          <div 
-            key={i} 
-            className={`h-12 flex items-center justify-center snap-center transition-all duration-200 ${
-              item === value ? 'text-black font-bold text-xl scale-110' : 'text-gray-300 font-medium text-lg'
-            }`}
-          >
-            {item} {label && item === value && <span className="text-sm font-normal ml-1">{label}</span>}
-          </div>
-        ))}
+          return (
+            <div
+              key={i}
+              className={`
+                h-[56px] flex items-center justify-center snap-center transition-all duration-200
+                ${selected ? "scale-110 opacity-100" : "scale-95 opacity-25"}
+              `}
+            >
+              <span
+                className={`
+                  ${selected ? "text-lg font-bold text-black" : "text-xl text-gray-400"}
+                `}
+              >
+                {item}
+              </span>
+              {selected && label && (
+                <span className="ml-1 text-lg font-semibold text-gray-500">
+                  {label}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 };
+
 
 // --- Toggle Switch ---
 interface ToggleProps {

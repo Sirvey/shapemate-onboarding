@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Button, StickyFooter, SelectCard, Input, ScrollPicker, Toggle } from './UI';
 import { UserData } from '../types';
 import { motion } from 'framer-motion';
@@ -289,49 +289,75 @@ export const SourceStep: React.FC<StepProps> = ({
 
 
 
-// 5. Measurements (Wheel Pickers)
-export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
+export const MeasurementsStep: React.FC<StepProps> = ({
+  data,
+  updateData,
+  onNext,
+  onBack,
+  progress
+}) => {
+
   const [unit, setUnit] = useState<'imperial' | 'metric'>('metric');
 
-  // Ranges
+  // VALUE LISTS
   const cmRange = Array.from({ length: 151 }, (_, i) => 100 + i);
   const kgRange = Array.from({ length: 221 }, (_, i) => 30 + i);
-
   const lbsRange = Array.from({ length: 401 }, (_, i) => 50 + i);
 
-  // For imperial height picker
-  const imperialHeightOptions = [];
+  const imperialHeightOptions: string[] = [];
   for (let f = 3; f <= 7; f++) {
     for (let i = 0; i <= 11; i++) {
       imperialHeightOptions.push(`${f}' ${i}"`);
     }
   }
 
-  // State
-  const [cm, setCm] = useState(
-    data.height.unit === 'cm' && data.height.value ? parseInt(data.height.value) : 170
-  );
-  const [kg, setKg] = useState(
-    data.weight.unit === 'kg' && data.weight.value ? parseInt(data.weight.value) : 70
-  );
+  // FIXED DEFAULTS  
+  const DEFAULT_CM = 175;
+  const DEFAULT_KG = 80;
+  const DEFAULT_IMP = `5' 9"`;
+  const DEFAULT_LBS = 176;
 
-  const [impHeightStr, setImpHeightStr] = useState("5' 9\"");
-  const [lbs, setLbs] = useState(150);
+  // We MUST initialize completely independent of "data"
+  const [cm, setCm] = useState(DEFAULT_CM);
+  const [kg, setKg] = useState(DEFAULT_KG);
+  const [impHeightStr, setImpHeightStr] = useState(DEFAULT_IMP);
+  const [lbs, setLbs] = useState(DEFAULT_LBS);
 
-  // Sync data upward
+  // Prevent immediate overwrite on first render
+  const didMount = useRef(false);
+
+  // Sync upward ONLY after mount
   useEffect(() => {
-    if (unit === 'metric') {
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
+
+    if (unit === "metric") {
       updateData({
-        height: { value: cm.toString(), unit: 'cm' },
-        weight: { value: kg.toString(), unit: 'kg' }
+        height: { value: String(cm), unit: "cm" },
+        weight: { value: String(kg), unit: "kg" }
       });
     } else {
       updateData({
-        height: { value: impHeightStr, unit: 'ft' },
-        weight: { value: lbs.toString(), unit: 'lbs' }
+        height: { value: impHeightStr, unit: "ft" },
+        weight: { value: String(lbs), unit: "lbs" }
       });
     }
   }, [cm, kg, impHeightStr, lbs, unit]);
+
+
+  // When user switches unit → reset defaults (like every fitness app)
+  useEffect(() => {
+    if (unit === "metric") {
+      setCm(DEFAULT_CM);
+      setKg(DEFAULT_KG);
+    } else {
+      setImpHeightStr(DEFAULT_IMP);
+      setLbs(DEFAULT_LBS);
+    }
+  }, [unit]);
+
 
   return (
     <Layout
@@ -340,17 +366,18 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
       progress={progress}
       onBack={onBack}
     >
-      {/* Unit Switch */}
+
+      {/* UNIT SWITCH */}
       <div className="flex justify-center mb-10 mt-6">
         <div className="bg-gray-100 p-1 rounded-full flex gap-1">
-          {['Imperial', 'Metric'].map((u) => (
+          {["Imperial", "Metric"].map((u) => (
             <button
               key={u}
               onClick={() => setUnit(u.toLowerCase() as any)}
               className={`px-8 py-2.5 rounded-full text-sm font-semibold transition-all ${
                 unit === u.toLowerCase()
-                  ? 'bg-white shadow-md text-black'
-                  : 'text-gray-400 hover:text-gray-600'
+                  ? "bg-white shadow-md text-black"
+                  : "text-gray-400 hover:text-gray-600"
               }`}
             >
               {u}
@@ -359,15 +386,14 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
         </div>
       </div>
 
-      {/* Columns */}
+      {/* TWO PICKERS SIDE BY SIDE */}
       <div className="flex gap-4 px-2">
-        {/* Height */}
+
+        {/* HEIGHT */}
         <div className="flex-1 flex flex-col items-center">
           <h3 className="font-bold text-lg mb-4">Height</h3>
-
-          {unit === 'metric' ? (
+          {unit === "metric" ? (
             <ScrollPicker
-              className="no-horizontal-pan"
               items={cmRange}
               value={cm}
               onChange={(v) => setCm(v as number)}
@@ -375,7 +401,6 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
             />
           ) : (
             <ScrollPicker
-              className="no-horizontal-pan"
               items={imperialHeightOptions}
               value={impHeightStr}
               onChange={(v) => setImpHeightStr(v as string)}
@@ -383,13 +408,11 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
           )}
         </div>
 
-        {/* Weight */}
+        {/* WEIGHT */}
         <div className="flex-1 flex flex-col items-center">
           <h3 className="font-bold text-lg mb-4">Weight</h3>
-
-          {unit === 'metric' ? (
+          {unit === "metric" ? (
             <ScrollPicker
-              className="no-horizontal-pan"
               items={kgRange}
               value={kg}
               onChange={(v) => setKg(v as number)}
@@ -397,7 +420,6 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
             />
           ) : (
             <ScrollPicker
-              className="no-horizontal-pan"
               items={lbsRange}
               value={lbs}
               onChange={(v) => setLbs(v as number)}
@@ -405,6 +427,7 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
             />
           )}
         </div>
+
       </div>
 
       <StickyFooter>
@@ -415,35 +438,51 @@ export const MeasurementsStep: React.FC<StepProps> = ({ data, updateData, onNext
 };
 
 
+
+
+
 // 6. Birthday (Wheel Pickers)
 export const BirthdayStep: React.FC<StepProps> = ({ data, updateData, onNext, onBack, progress }) => {
     // Generate Dates
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
     const days = Array.from({ length: 31 }, (_, i) => i + 1);
     const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 100 }, (_, i) => currentYear - 100 + i).reverse(); // 2024 down to 1924
+    const years = Array.from({ length: 100 }, (_, i) => currentYear - 100 + i).reverse();
 
-    // Parse existing date or default
-    const defaultDate = data.birthDate ? new Date(data.birthDate) : new Date(2000, 0, 1);
+    // -------------------------------------------------
+    // DEFAULT DATE → 01 January 2005
+    // -------------------------------------------------
+    const DEFAULT_BIRTHDATE = new Date(2005, 0, 1);
 
-    const [selectedMonth, setSelectedMonth] = useState(months[defaultDate.getMonth()]);
-    const [selectedDay, setSelectedDay] = useState(defaultDate.getDate());
-    const [selectedYear, setSelectedYear] = useState(defaultDate.getFullYear());
+    // Parse existing or apply default
+    const userDate = data.birthDate ? new Date(data.birthDate) : DEFAULT_BIRTHDATE;
 
+    const [selectedMonth, setSelectedMonth] = useState(months[userDate.getMonth()]);
+    const [selectedDay, setSelectedDay] = useState(userDate.getDate());
+    const [selectedYear, setSelectedYear] = useState(userDate.getFullYear());
+
+    // Sync changes upward
     useEffect(() => {
         const monthIndex = months.indexOf(selectedMonth);
 
+        // Ensure correct days per month
         const maxDays = new Date(selectedYear, monthIndex + 1, 0).getDate();
         const validDay = Math.min(selectedDay, maxDays);
         if (validDay !== selectedDay) setSelectedDay(validDay);
 
-        const dateString = `${selectedYear}-${String(monthIndex + 1).padStart(2, '0')}-${String(validDay).padStart(2, '0')}`;
+        // Format YYYY-MM-DD
+        const dateString = `${selectedYear}-${String(monthIndex + 1).padStart(2, "0")}-${String(validDay).padStart(2, "0")}`;
         updateData({ birthDate: dateString });
+
     }, [selectedMonth, selectedDay, selectedYear]);
 
     return (
         <Layout
-            title="When's you birthday?"
+            title="When's your birthday?"
             subtitle="We only use this to calculate your age for health metrics and goals."
             progress={progress}
             onBack={onBack}
@@ -487,6 +526,7 @@ export const BirthdayStep: React.FC<StepProps> = ({ data, updateData, onNext, on
         </Layout>
     );
 };
+
 
 
 // 7. Goal (redesigned with matching icon style)
