@@ -160,78 +160,83 @@ export default function App() {
   };
 
 
-  // -------------------------------------------------------------
-  // Save onboarding → Supabase
-  // -------------------------------------------------------------
   const submitOnboardingToSupabase = async () => {
-    if (!sender) return;
+  if (!sender) return false;
 
-    setLoadingSubmit(true);
-    setSubmitError(null);
+  setLoadingSubmit(true);
+  setSubmitError(null);
 
-    try {
-      const genderCode = mapGenderToCode(userData.gender);
+  try {
+    const genderCode = mapGenderToCode(userData.gender);
 
-      const heightCm =
-        userData.height.unit === 'cm'
-          ? Number(userData.height.value)
-          : parseImperialHeightToCm(userData.height.value);
+    const heightCm =
+      userData.height.unit === 'cm'
+        ? Number(userData.height.value)
+        : parseImperialHeightToCm(userData.height.value);
 
-      const weightKg = convertWeightToKg(userData.weight);
+    const weightKg = convertWeightToKg(userData.weight);
 
-      // save base data
-      const { error: stammdatenError } = await supabase
-        .from("stammdaten")
-        .update({
-          name: `${userData.firstName || ""} ${userData.lastName || ""}`.trim(),
-          gender: genderCode,
-          referral_source: userData.source,
-          groesse: heightCm,
-          geburtsdatum: userData.birthDate,
-          goal: mapGoalToCode(userData.goal),
-          diet: userData.diet,
-          referral_code: userData.referralCode,
-          mail: userData.email,
-        })
-        .eq("sender", sender);
+    // Base data
+    const { error: stammdatenError } = await supabase
+      .from("stammdaten")
+      .update({
+        name: `${userData.firstName || ""} ${userData.lastName || ""}`.trim(),
+        gender: genderCode,
+        referral_source: userData.source,
+        groesse: heightCm,
+        geburtsdatum: userData.birthDate,
+        goal: mapGoalToCode(userData.goal),
+        diet: userData.diet,
+        referral_code: userData.referralCode,
+        mail: userData.email,
+      })
+      .eq("sender", sender);
 
-      if (stammdatenError) throw stammdatenError;
-
-      // save weight entry
-      if (weightKg != null) {
-        const { error: weightError } = await supabase
-          .from("user_weights")
-          .insert({ sender, weight: weightKg });
-
-        if (weightError) throw weightError;
-      }
-
-      // notifications
-      const prefs = userData.notificationPreferences;
-      const reminderList = [
-        { type: "weighing", key: "weighing" },
-        { type: "meal", key: "meal" },
-        { type: "workout", key: "workout" },
-      ];
-
-      for (const row of reminderList) {
-        const { error } = await supabase
-          .from("erinnerungen")
-          .update({ active: prefs[row.key] ? "X" : null })
-          .eq("sender", sender)
-          .eq("type", row.type);
-
-        if (error) throw error;
-      }
-
-    } catch (err: any) {
-      setSubmitError(err.message || "Unexpected error while saving onboarding data");
-      throw err;
-
-    } finally {
-      setLoadingSubmit(false);
+    if (stammdatenError) {
+      setSubmitError(stammdatenError.message);
+      return false;
     }
-  };
+
+    // Weight
+    if (weightKg != null) {
+      const { error: weightError } = await supabase
+        .from("user_weights")
+        .insert({ sender, weight: weightKg });
+
+      if (weightError) {
+        setSubmitError(weightError.message);
+        return false;
+      }
+    }
+
+    // Notifications
+    const prefs = userData.notificationPreferences;
+    const reminderList = [
+      { type: "weighing", key: "weighing" },
+      { type: "meal", key: "meal" },
+      { type: "workout", key: "workout" },
+    ];
+
+    for (const row of reminderList) {
+      const { error } = await supabase
+        .from("erinnerungen")
+        .update({ active: prefs[row.key] ? "X" : null })
+        .eq("sender", sender)
+        .eq("type", row.type);
+
+      if (error) {
+        setSubmitError(error.message);
+        return false;
+      }
+    }
+
+    return true;
+
+  } finally {
+    setLoadingSubmit(false);
+  }
+};
+
 
 
   // -------------------------------------------------------------

@@ -1200,15 +1200,57 @@ export const ReferralStep: React.FC<StepProps> = ({ data, updateData, onNext, on
 
 
 // 21. Email Signup (Simple Email Input Only)
-export const EmailSignupStep: React.FC<StepProps> = ({ data, updateData, onNext }) => {
+export const EmailSignupStep: React.FC<StepProps> = ({ 
+  data, 
+  updateData, 
+  onNext, 
+  generatePlan, 
+  isGenerating 
+}) => {
+
   const email = data.email?.trim() || "";
 
-  // Basic email regex (simpel + zuverlässig)
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Basic email regex
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  // -------------------------------------------------------------
+  // Save onboarding → Supabase (wird hier injected von App.tsx)
+  // -------------------------------------------------------------
+  const handleSubmit = async () => {
+    if (!isValidEmail) return;
+
+    setLoadingSubmit(true);
+    setSubmitError(null);
+
+    try {
+      // submitOnboardingToSupabase kommt aus App.tsx via props.generatePlan?
+      // In deinem System speichern wir alles hier:
+      const success = await (generatePlan?.() ?? Promise.resolve(true));
+
+      if (success) {
+        onNext();       // ✔️ Weiter zum nächsten Step
+      }
+
+    } catch (err: any) {
+      setSubmitError(err.message || "Unexpected error while saving onboarding data");
+    } finally {
+      setLoadingSubmit(false);
+    }
+  };
 
   return (
     <Layout showBack={false} title="Save your progress">
       <div className="mt-12 flex flex-col gap-6 px-2">
+
+        {/* Error Banner */}
+        {submitError && (
+          <div className="w-full bg-red-50 text-red-700 border border-red-200 px-4 py-2 rounded-xl text-center text-sm mb-2">
+            {submitError}
+          </div>
+        )}
 
         {/* Description */}
         <p className="text-gray-600 text-sm text-center px-4">
@@ -1234,17 +1276,19 @@ export const EmailSignupStep: React.FC<StepProps> = ({ data, updateData, onNext 
 
       </div>
 
+      {/* Footer Button */}
       <StickyFooter>
         <Button
-          onClick={onNext}
-          disabled={!isValidEmail}
+          onClick={handleSubmit}
+          disabled={!isValidEmail || loadingSubmit}
         >
-          Continue
+          {loadingSubmit ? "Saving..." : "Continue"}
         </Button>
       </StickyFooter>
     </Layout>
   );
 };
+
 
 
 
