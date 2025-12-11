@@ -11,18 +11,34 @@ interface LayoutProps {
   progress?: number;
   title?: string;
   subtitle?: string;
+  hideHeader?: boolean;
   noPadding?: boolean;
 }
 
+
 export const Layout: React.FC<LayoutProps> = ({ 
-  children, 
-  onBack, 
-  showBack = true, 
+  children,
+  onBack,
+  showBack = true,
   progress,
   title,
   subtitle,
+  hideHeader = false,  // <– hinzugefügt
   noPadding = false
 }) => {
+
+  if (hideHeader) {
+    return (
+      <div className="flex flex-col h-full w-full max-w-md mx-auto bg-white relative">
+        <div className={`flex-1 overflow-y-auto no-scrollbar ${noPadding ? '' : 'px-6'}`}>
+          <div className="pb-32">
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full w-full max-w-md mx-auto bg-white relative">
       {/* Header */}
@@ -47,7 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({
             </div>
           )}
         </div>
-        
+
         {title && (
           <motion.h1 
             initial={{ opacity: 0, y: 10 }}
@@ -71,13 +87,14 @@ export const Layout: React.FC<LayoutProps> = ({
 
       {/* Scrollable Content */}
       <div className={`flex-1 overflow-y-auto no-scrollbar ${noPadding ? '' : 'px-6'}`}>
-        <div className="pb-32"> {/* Bottom padding for sticky button */}
+        <div className="pb-32">
           {children}
         </div>
       </div>
     </div>
   );
 };
+
 
 // --- Primary Button ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

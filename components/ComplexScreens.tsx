@@ -111,7 +111,7 @@ export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
         {/* Success Box sobald fertig */}
         {showSuccess && (
           <div className="bg-black text-white rounded-2xl p-6 mt-4 w-full max-w-sm">
-            <h3 className="text-lg font-bold mb-1">Your plan is ready!</h3>
+            <h3 className="text-lg font-bold mb-1">Your plan is ready 🎉</h3>
             <p className="text-sm text-gray-300 mb-4">
               We have successfully calculated your calories and macros.
             </p>
@@ -122,6 +122,26 @@ export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
           </div>
         )}
       </div>
+
+      {/* Arrow pointing to the "Show Results" button */}
+{showSuccess && (
+  <div className="w-full flex justify-center mt-3 animate-bounce">
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="black"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 5v14" />
+      <path d="M5 12l7 7 7-7" />
+    </svg>
+  </div>
+)}
+
 
       {/* Button nur wenn der Plan fertig ist */}
       {showSuccess && (
@@ -150,8 +170,8 @@ export const DashboardStep: React.FC<Props> = ({ data, onNext, onBack }) => {
   const fats = Math.round(plan?.fatsGrams ?? 0);
 
   return (
-    <Layout showBack={true} onBack={onBack} noPadding>
-      <div className="px-6 pt-4 pb-32">
+    <Layout hideHeader={true} noPadding>
+      <div className="px-6 pt-0 pb-24 mt-[-8px]">
         {/* Success Icon */}
         <div className="flex justify-center mb-6">
           <div className="bg-black text-white rounded-full p-1">

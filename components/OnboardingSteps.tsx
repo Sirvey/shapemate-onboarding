@@ -721,12 +721,12 @@ export const TrustStep: React.FC<StepProps> = ({ onNext, onBack, progress }) => 
         >
             {/* Icon */}
             <div className="flex flex-col items-center mt-10 text-center px-4">
-                <div className="w-40 h-40 bg-gray-100 rounded-full flex items-center justify-center mb-8 relative overflow-hidden">
+                <div className="w-36 h-36 bg-gray-100 rounded-full flex items-center justify-center mb-8 relative overflow-hidden">
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ duration: 0.5 }}
-                        className="text-6xl"
+                        className="text-5xl"
                     >
                         🤝
                     </motion.div>
@@ -735,7 +735,6 @@ export const TrustStep: React.FC<StepProps> = ({ onNext, onBack, progress }) => 
 
                 {/* Text */}
                 <p className="text-gray-600 text-sm max-w-xs leading-relaxed">
-                    We use your data only to personalize your Shapemate experience.
                     Your information always stays private and secure.
                 </p>
 
@@ -791,7 +790,7 @@ export const ConnectAppsStep: React.FC<StepProps> = ({ onNext, onBack, progress 
         <div
           className="relative rounded-xl border border-[#D3D3D6]
           bg-[#F6F2F2] p-6 shadow-[0_10px_20px_rgba(31,61,43,0.15)]
-          backdrop-blur-md overflow-hidden w-full h-[300px]"
+          backdrop-blur-md overflow-hidden w-full h-[250px]"
         >
           {/* curved connectors */}
           <svg
