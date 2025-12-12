@@ -230,22 +230,29 @@ const submitOnboardingToSupabase = async (): Promise<boolean> => {
     }
 
     // 3) reminders: benutze UPSERT statt UPDATE, damit es nie "ins Leere" läuft
-    const prefs = userData.notificationPreferences;
-    const reminderRows = [
-      { sender, type: "weighing", active: prefs.weighing ? "X" : null },
-      { sender, type: "meal", active: prefs.meal ? "X" : null },
-      { sender, type: "workout", active: prefs.workout ? "X" : null },
-    ];
+    // 3) reminders: UPDATE pro type (robust, kein Unique-Constraint nötig)
+const prefs = userData.notificationPreferences;
+const reminderList = [
+  { type: "weighing", active: prefs.weighing ? "X" : null },
+  { type: "meal", active: prefs.meal ? "X" : null },
+  { type: "workout", active: prefs.workout ? "X" : null },
+];
 
-    const { error: reminderError } = await supabase
-      .from("erinnerungen")
-      .upsert(reminderRows, { onConflict: "sender,type" });
+for (const row of reminderList) {
+  const { error } = await supabase
+    .from("erinnerungen")
+    .update({ active: row.active })
+    .eq("sender", sender)
+    .eq("type", row.type);
 
-    if (reminderError) throw reminderError;
+  if (error) throw error;
+}
+
 
     return true;
   } catch (err: any) {
   console.error("submitOnboardingToSupabase failed:", err);
+  setSubmitError(err?.message || "Unexpected error while saving onboarding data");
   return false;
 } finally {
     setLoadingSubmit(false);
