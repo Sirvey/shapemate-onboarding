@@ -531,27 +531,9 @@ export const PaywallPromo: React.FC<Props> = ({ onNext }) => {
           Once you close this offer, it’s gone forever.
         </p>
 
-        {/* Plan Card */}
-        <div className="w-full border-2 border-black rounded-xl overflow-hidden mb-8 bg-white">
-          <div className="bg-[#1C1C1E] text-white text-center py-1.5 text-xs font-bold uppercase tracking-widest">
-            3-Day Free Trial
-          </div>
-
-          <div className="p-4 flex justify-between items-center">
-            <div className="flex flex-col">
-              <span className="font-bold text-lg">Yearly Plan</span>
-              <span className="text-gray-500 text-sm mt-0.5">
-                €4.15 / mo
-              </span>
-            </div>
-            <div className="font-bold text-lg">
-              €4.15
-            </div>
-          </div>
-        </div>
 
         {/* CTA Buttons — UNVERÄNDERTE LOGIK */}
-        <div className="w-full mt-auto">
+        <div className="w-full mt-4">
 
           {/* PRIMARY */}
           <button
