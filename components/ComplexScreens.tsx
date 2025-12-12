@@ -60,20 +60,24 @@ export const AlreadyRegisteredScreen: React.FC = () => {
   );
 };
 
-interface Props {
+interface ResultsProps {
   data: UserData;
   onNext: () => void;
-  onBack?: () => void;
+  generatePlan: () => Promise<void>;
 }
+
 
 /* -------------------------------------------------------
    19. RESULTS mit Vitality LoadingBar und Confetti
 ------------------------------------------------------- */
 
-export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
+export const ResultsStep: React.FC<ResultsProps> = ({
+  data,
+  onNext,
+  generatePlan,
+}) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
   const [statusIndex, setStatusIndex] = useState(0);
 
   const messages = [
@@ -83,33 +87,29 @@ export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
     "Finalizing your personal plan",
   ];
 
-  // OpenAI Plan generieren
+  // 🔹 OpenAI Plan ausführen
   useEffect(() => {
     let cancelled = false;
 
-    async function run() {
+    const run = async () => {
       try {
-        if (!cancelled) {
-  onNext(); // Plan ist bereits im Parent
-}
-
-      } catch (err) {
-        console.error("Plan generation failed", err);
+        await generatePlan();
+      } catch (e) {
+        console.error("OpenAI plan generation failed:", e);
       } finally {
         if (!cancelled) {
           setIsLoaded(true);
         }
       }
-    }
+    };
 
     run();
-
     return () => {
       cancelled = true;
     };
-  }, [data]);
+  }, []);
 
-  // Status Messages rotieren, solange nicht fertig
+  // 🔹 Status Messages rotieren
   useEffect(() => {
     if (isLoaded) return;
 
@@ -118,9 +118,9 @@ export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
     }, 2500);
 
     return () => clearInterval(interval);
-  }, [isLoaded, messages.length]);
+  }, [isLoaded]);
 
-  // Wenn fertig → Confetti und Success Box anzeigen
+  // 🔹 Confetti + Success
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -140,53 +140,26 @@ export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
     <Layout showBack={false} noPadding>
       <div className="px-6 pt-16 pb-10 flex flex-col items-center text-center">
 
-        {/* Loader sichtbar bis der Plan fertig ist */}
         {!showSuccess && (
           <>
             <LoadingBar message={messages[statusIndex]} size={170} />
-
             <p className="text-xs text-gray-400 mt-6 max-w-xs">
               We are creating your personalized nutrition plan based on your data.
             </p>
           </>
         )}
 
-        {/* Success Box sobald fertig */}
         {showSuccess && (
           <div className="bg-black text-white rounded-2xl p-6 mt-4 w-full max-w-sm">
-            <h3 className="text-lg font-bold mb-1">Your plan is ready 🎉</h3>
+            <h3 className="text-lg font-bold mb-1">Your plan is ready</h3>
             <p className="text-sm text-gray-300 mb-4">
-              We have successfully calculated your calories and macros.
+              Calories and macros have been calculated successfully.
             </p>
-
-            <div className="flex justify-center">
-              <CheckCircle2 size={28} className="text-white" />
-            </div>
+            <CheckCircle2 size={28} className="mx-auto" />
           </div>
         )}
       </div>
 
-      {/* Arrow pointing to the "Show Results" button */}
-{showSuccess && (
-  <div className="w-full flex justify-center mt-3 animate-bounce">
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="black"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 5v14" />
-      <path d="M5 12l7 7 7-7" />
-    </svg>
-  </div>
-)}
-
-
-      {/* Button nur wenn der Plan fertig ist */}
       {showSuccess && (
         <StickyFooter>
           <Button onClick={onNext}>Show Results</Button>
@@ -195,6 +168,7 @@ export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
     </Layout>
   );
 };
+
 
 
 

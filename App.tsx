@@ -405,12 +405,11 @@ await markTokenAsUsed();
       case StepType.RESULTS:
         return (
           <ResultsStep
-            data={userData}
-            onNext={nextStep}
-            generatePlan={runOpenAIPlan}
-            planLoading={planLoading}
-            planError={planError}
-          />
+  data={userData}
+  onNext={nextStep}
+  generatePlan={runOpenAIPlan}
+/>
+
         );
 
       case StepType.DASHBOARD:
