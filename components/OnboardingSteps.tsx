@@ -1224,15 +1224,22 @@ export const ReferralStep: React.FC<StepProps> = ({ data, updateData, onNext, on
         )}
       </div>
 
-      <StickyFooter>
-        <Button onClick={onNext} disabled={!isContinueEnabled}>
-          Continue
-        </Button>
-
-        <Button variant="secondary" onClick={onNext} className="mt-3">
+            <StickyFooter>
+        {/* SKIP FIRST */}
+        <Button variant="secondary" onClick={onNext}>
           Skip
         </Button>
+
+        {/* CONTINUE BELOW */}
+        <Button 
+          onClick={onNext} 
+          disabled={!isContinueEnabled} 
+          className="mt-3"
+        >
+          Continue
+        </Button>
       </StickyFooter>
+
     </Layout>
   );
 };

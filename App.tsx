@@ -189,6 +189,7 @@ export default function App() {
         diet: userData.diet,
         referral_code: userData.referralCode,
         mail: userData.email,
+        abomodell: "testabo",
       })
       .eq("sender", sender);
 

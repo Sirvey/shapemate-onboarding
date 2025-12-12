@@ -16,6 +16,7 @@ import { UserData } from "../types";
 import confetti from "canvas-confetti";
 import { generateNutritionPlan } from "../openaiClient";
 import LoadingBar from "./LoadingBar";
+import { supabase } from "../supabaseClient";
 
 interface Props {
   data: UserData;
@@ -159,15 +160,62 @@ export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
 
 
 /* -------------------------------------------------------
-   20. FINAL DASHBOARD — uses *real* Gemini macro data
+   20. FINAL DASHBOARD — editable macros + Supabase update
 ------------------------------------------------------- */
 export const DashboardStep: React.FC<Props> = ({ data, onNext, onBack }) => {
+  const sender = data.sender;
   const plan = data.aiPlan;
 
-  const calories = Math.round(plan?.targetCalories ?? 0);
-  const protein = Math.round(plan?.proteinGrams ?? 0);
-  const carbs = Math.round(plan?.carbsGrams ?? 0);
-  const fats = Math.round(plan?.fatsGrams ?? 0);
+  // Lokale, bearbeitbare Werte
+  const [calories, setCalories] = useState(Math.round(plan?.targetCalories ?? 0));
+  const [carbs, setCarbs] = useState(Math.round(plan?.carbsGrams ?? 0));
+  const [protein, setProtein] = useState(Math.round(plan?.proteinGrams ?? 0));
+  const [fats, setFats] = useState(Math.round(plan?.fatsGrams ?? 0));
+
+  // Welches Feld ist gerade im Edit-Modus?
+  type EditField = "cal" | "carb" | "pro" | "fat" | null;
+  const [editing, setEditing] = useState<EditField>(null);
+  const [temp, setTemp] = useState("");
+
+  const startEdit = (field: Exclude<EditField, null>, currentValue: number) => {
+    setEditing(field);
+    setTemp(String(currentValue));
+  };
+
+  const applyEdit = () => {
+    const num = parseInt(temp, 10);
+    if (!isNaN(num) && editing) {
+      if (editing === "cal") setCalories(num);
+      if (editing === "carb") setCarbs(num);
+      if (editing === "pro") setProtein(num);
+      if (editing === "fat") setFats(num);
+    }
+    setEditing(null);
+  };
+
+  // Beim „Let's get started!“ alle Werte in Supabase speichern
+  const saveMacros = async () => {
+    if (!sender) return;
+
+    const { error } = await supabase
+      .from("stammdaten")
+      .update({
+        kcal_bedarf: calories,
+        carbs_main: carbs,
+        protein_main: protein,
+        fat_main: fats,
+      })
+      .eq("sender", sender);
+
+    if (error) {
+      console.error("Macro update failed:", error);
+    }
+  };
+
+  const handleContinue = async () => {
+    await saveMacros();
+    onNext();
+  };
 
   return (
     <Layout hideHeader={true} noPadding>
@@ -180,13 +228,25 @@ export const DashboardStep: React.FC<Props> = ({ data, onNext, onBack }) => {
         </div>
 
         <h1 className="text-2xl font-bold text-center mb-2">
-          Congratulations<br />your custom plan is ready!
+          Congratulations
+          <br />
+          your custom plan is ready!
         </h1>
 
-        <p className="text-center text-sm mb-6">Your daily recommended intake:</p>
+        <p className="text-center text-sm mb-4">
+          Your daily recommended intake:
+        </p>
 
-        <div className="text-center text-3xl font-bold mb-8">
-          {calories} kcal
+        {/* Gesamt-Calories + ✏️ (öffnet Edit im Calories-Card) */}
+        <div className="flex items-center justify-center gap-2 text-3xl font-bold mb-8">
+          <span>{calories} kcal</span>
+          <button
+            type="button"
+            className="text-xl"
+            onClick={() => startEdit("cal", calories)}
+          >
+            ✏️
+          </button>
         </div>
 
         {/* Macro cards */}
@@ -201,36 +261,92 @@ export const DashboardStep: React.FC<Props> = ({ data, onNext, onBack }) => {
             <MacroCard
               label="Calories"
               icon={<Flame size={14} />}
-              value={`${calories}`}
+              value={
+                editing === "cal" ? (
+                  <input
+                    className="w-16 text-center border rounded-lg p-1"
+                    type="number"
+                    value={temp}
+                    onChange={(e) => setTemp(e.target.value)}
+                    onBlur={applyEdit}
+                    autoFocus
+                  />
+                ) : (
+                  calories
+                )
+              }
               unit="kcal"
               ringColor="gray-200"
+              onEdit={() => startEdit("cal", calories)}
             />
 
             {/* CARBS */}
             <MacroCard
               label="Carbs"
               icon={<Utensils size={14} />}
-              value={`${carbs}`}
+              value={
+                editing === "carb" ? (
+                  <input
+                    className="w-16 text-center border rounded-lg p-1"
+                    type="number"
+                    value={temp}
+                    onChange={(e) => setTemp(e.target.value)}
+                    onBlur={applyEdit}
+                    autoFocus
+                  />
+                ) : (
+                  carbs
+                )
+              }
               unit="g"
               ringColor="orange-100"
+              onEdit={() => startEdit("carb", carbs)}
             />
 
             {/* PROTEIN */}
             <MacroCard
               label="Protein"
               icon={<Zap size={14} />}
-              value={`${protein}`}
+              value={
+                editing === "pro" ? (
+                  <input
+                    className="w-16 text-center border rounded-lg p-1"
+                    type="number"
+                    value={temp}
+                    onChange={(e) => setTemp(e.target.value)}
+                    onBlur={applyEdit}
+                    autoFocus
+                  />
+                ) : (
+                  protein
+                )
+              }
               unit="g"
               ringColor="red-100"
+              onEdit={() => startEdit("pro", protein)}
             />
 
             {/* FATS */}
             <MacroCard
               label="Fats"
               icon={<Salad size={14} />}
-              value={`${fats}`}
+              value={
+                editing === "fat" ? (
+                  <input
+                    className="w-16 text-center border rounded-lg p-1"
+                    type="number"
+                    value={temp}
+                    onChange={(e) => setTemp(e.target.value)}
+                    onBlur={applyEdit}
+                    autoFocus
+                  />
+                ) : (
+                  fats
+                )
+              }
               unit="g"
               ringColor="blue-100"
+              onEdit={() => startEdit("fat", fats)}
             />
           </div>
 
@@ -247,11 +363,12 @@ export const DashboardStep: React.FC<Props> = ({ data, onNext, onBack }) => {
       </div>
 
       <StickyFooter>
-        <Button onClick={onNext}>Let's get started!</Button>
+        <Button onClick={handleContinue}>Let's get started!</Button>
       </StickyFooter>
     </Layout>
   );
 };
+
 
 
 /* -------------------------------------------------------
@@ -263,12 +380,14 @@ const MacroCard = ({
   value,
   unit,
   ringColor,
+  onEdit,
 }: {
   label: string;
   icon: React.ReactNode;
-  value: string | number;
+  value: React.ReactNode; // kann Zahl oder <input> sein
   unit: string;
   ringColor: string;
+  onEdit?: () => void;
 }) => (
   <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 relative">
     <div className="flex items-center gap-2 text-xs font-bold mb-2">
@@ -284,9 +403,18 @@ const MacroCard = ({
       </span>
     </div>
 
-    <div className="absolute bottom-2 right-2 text-gray-300">✏️</div>
+    {onEdit && (
+      <button
+        type="button"
+        className="absolute bottom-2 right-2 text-gray-400 hover:text-black"
+        onClick={onEdit}
+      >
+        ✏️
+      </button>
+    )}
   </div>
 );
+
 
 
 export const PaywallHook: React.FC<Props> = ({ onNext }) => {
