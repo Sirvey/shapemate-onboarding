@@ -296,8 +296,6 @@ try {
   // Step Navigation
   // -------------------------------------------------------------
   const nextStep = async () => {
-  if (loadingSubmit) return;
-
   const current = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
 
   if (current === StepType.EMAIL_SIGNUP) {
@@ -319,7 +317,6 @@ try {
 
 
 
-
   const prevStep = () => {
     if (currentStepIndex > 0) setCurrentStepIndex(idx => idx - 1);
   };
@@ -334,13 +331,13 @@ try {
   // Render Step
   // -------------------------------------------------------------
   const renderStep = () => {
-    const props = {
-      data: userData,
-      updateData,
-      onNext: nextStep,
-      onBack: prevStep,
-      progress,
-    };
+  const props = {
+    data: userData,
+    updateData,
+    onNext: nextStep,
+    onBack: prevStep,
+    progress,
+  };
 
     switch (currentStepType) {
       case StepType.WELCOME: return <WelcomeStep {...props} />;
@@ -357,6 +354,7 @@ try {
       case StepType.RATING: return <RatingStep {...props} />;
       case StepType.NOTIFICATIONS: return <NotificationsStep {...props} />;
       case StepType.REFERRAL: return <ReferralStep {...props} />;
+      case StepType.EMAIL_SIGNUP: return <EmailSignupStep {...props} />;
 
       // RESULTS now performs the AI call
       case StepType.RESULTS:
@@ -374,12 +372,8 @@ try {
         return <DashboardStep data={userData} onNext={nextStep} />;
 
       case StepType.EMAIL_SIGNUP:
-  return (
-    <EmailSignupStep
-      data={userData}
-      onNext={nextStep}
-    />
-  );
+  return <EmailSignupStep {...props} />;
+
 
 
       case StepType.PAYWALL_HOOK:
