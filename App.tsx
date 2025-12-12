@@ -163,8 +163,8 @@ export default function App() {
   // -------------------------------------------------------------
 // Save onboarding → Supabase
 // -------------------------------------------------------------
-const submitOnboardingToSupabase = async () => {
-  if (!sender) return;
+const submitOnboardingToSupabase = async (): Promise<boolean> => {
+  if (!sender) return false;
 
   setLoadingSubmit(true);
   setSubmitError(null);
@@ -172,18 +172,31 @@ const submitOnboardingToSupabase = async () => {
   try {
     const genderCode = mapGenderToCode(userData.gender);
 
+    const safeNumberOrNull = (v: any) => {
+      if (v === null || v === undefined) return null;
+      const s = String(v).trim();
+      if (!s) return null;
+      const n = Number(s);
+      return Number.isFinite(n) ? n : null;
+    };
+
     const heightCm =
       userData.height.unit === "cm"
-        ? Number(userData.height.value)
-        : parseImperialHeightToCm(userData.height.value);
+        ? safeNumberOrNull(userData.height.value)
+        : (parseImperialHeightToCm(userData.height.value) ?? null);
 
-    const weightKg = convertWeightToKg(userData.weight);
+    const weightKg = (() => {
+      const w = convertWeightToKg(userData.weight);
+      return Number.isFinite(Number(w)) ? Number(w) : null;
+    })();
 
     const plan = userData.aiPlan;
+    const kcal_bedarf = plan ? Math.round(plan.targetCalories ?? 0) : null;
+    const carbs_main = plan ? Math.round(plan.carbsGrams ?? 0) : null;
+    const protein_main = plan ? Math.round(plan.proteinGrams ?? 0) : null;
+    const fat_main = plan ? Math.round(plan.fatsGrams ?? 0) : null;
 
-    // ----------------------------------------
-    // UPDATE stammdaten (including AI macros)
-    // ----------------------------------------
+    // 1) stammdaten update (inkl. testabo + macros)
     const { error: stammdatenError } = await supabase
       .from("stammdaten")
       .update({
@@ -197,22 +210,17 @@ const submitOnboardingToSupabase = async () => {
         referral_code: userData.referralCode,
         mail: userData.email,
 
-        // ✅ AI-calculated values
-        kcal_bedarf: plan ? Math.round(plan.targetCalories) : null,
-        carbs_main: plan ? Math.round(plan.carbsGrams) : null,
-        protein_main: plan ? Math.round(plan.proteinGrams) : null,
-        fat_main: plan ? Math.round(plan.fatsGrams) : null,
-
-        // ✅ Upgrade from omega → testabo
         abomodell: "testabo",
+        kcal_bedarf,
+        carbs_main,
+        protein_main,
+        fat_main,
       })
       .eq("sender", sender);
 
     if (stammdatenError) throw stammdatenError;
 
-    // ----------------------------------------
-    // Save weight entry (history)
-    // ----------------------------------------
+    // 2) weight insert (optional)
     if (weightKg != null) {
       const { error: weightError } = await supabase
         .from("user_weights")
@@ -221,35 +229,29 @@ const submitOnboardingToSupabase = async () => {
       if (weightError) throw weightError;
     }
 
-    // ----------------------------------------
-    // Notification preferences
-    // ----------------------------------------
+    // 3) reminders: benutze UPSERT statt UPDATE, damit es nie "ins Leere" läuft
     const prefs = userData.notificationPreferences;
-    const reminderList = [
-      { type: "weighing", key: "weighing" },
-      { type: "meal", key: "meal" },
-      { type: "workout", key: "workout" },
+    const reminderRows = [
+      { sender, type: "weighing", active: prefs.weighing ? "X" : null },
+      { sender, type: "meal", active: prefs.meal ? "X" : null },
+      { sender, type: "workout", active: prefs.workout ? "X" : null },
     ];
 
-    for (const row of reminderList) {
-      const { error } = await supabase
-        .from("erinnerungen")
-        .update({ active: prefs[row.key] ? "X" : null })
-        .eq("sender", sender)
-        .eq("type", row.type);
+    const { error: reminderError } = await supabase
+      .from("erinnerungen")
+      .upsert(reminderRows, { onConflict: "sender,type" });
 
-      if (error) throw error;
-    }
+    if (reminderError) throw reminderError;
 
+    return true;
   } catch (err: any) {
-    setSubmitError(
-      err?.message || "Unexpected error while saving onboarding data"
-    );
-    throw err;
+    setSubmitError(err?.message || "Unexpected error while saving onboarding data");
+    return false; // wichtig: NICHT throwen, sonst bleibt der UI-Flow hängen
   } finally {
     setLoadingSubmit(false);
   }
 };
+
 
 
 
