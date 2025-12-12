@@ -164,7 +164,10 @@ export default function App() {
 // Save onboarding → Supabase
 // -------------------------------------------------------------
 const submitOnboardingToSupabase = async (): Promise<boolean> => {
-  if (!sender) return false;
+  if (!sender) {
+  throw new Error("Sender not initialized yet");
+}
+
 
   setLoadingSubmit(true);
   setSubmitError(null);
@@ -229,39 +232,56 @@ const fat_main = safeInt(plan?.fatsGrams);
 
     if (stammdatenError) throw stammdatenError;
 
-    // 2) weight insert (optional)
-    if (weightKg != null) {
-      const { error: weightError } = await supabase
-        .from("user_weights")
-        .insert({ sender, weight: weightKg });
+    // 2) weight insert (optional). nicht blockieren
+if (weightKg != null) {
+  const { error: weightError } = await supabase
+    .from("user_weights")
+    .insert({ sender, weight: weightKg });
 
-      if (weightError) throw weightError;
-    }
-
-    // 3) reminders: benutze UPSERT statt UPDATE, damit es nie "ins Leere" läuft
-    // 3) reminders: UPDATE pro type (robust, kein Unique-Constraint nötig)
-const prefs = userData.notificationPreferences;
-const reminderList = [
-  { type: "weighing", active: prefs.weighing ? "X" : null },
-  { type: "meal", active: prefs.meal ? "X" : null },
-  { type: "workout", active: prefs.workout ? "X" : null },
-];
-
-for (const row of reminderList) {
-  const { error } = await supabase
-    .from("erinnerungen")
-    .update({ active: row.active })
-    .eq("sender", sender)
-    .eq("type", row.type);
-
-  if (error) throw error;
+  if (weightError) {
+    console.warn("user_weights insert failed:", weightError);
+    // NICHT throwen
+  }
 }
+
+// 3) reminders (optional). nicht blockieren
+try {
+  const prefs = userData.notificationPreferences;
+  const reminderList = [
+    { type: "weighing", active: prefs.weighing ? "X" : null },
+    { type: "meal", active: prefs.meal ? "X" : null },
+    { type: "workout", active: prefs.workout ? "X" : null },
+  ];
+
+  for (const row of reminderList) {
+    const { error } = await supabase
+      .from("erinnerungen")
+      .update({ active: row.active })
+      .eq("sender", sender)
+      .eq("type", row.type);
+
+    if (error) {
+      console.warn(`erinnerungen update failed for type=${row.type}:`, error);
+      // NICHT throwen
+    }
+  }
+} catch (e) {
+  console.warn("erinnerungen block crashed:", e);
+  // NICHT throwen
+}
+
 
 
     return true;
   } catch (err: any) {
   console.error("submitOnboardingToSupabase failed:", err);
-  setSubmitError(err?.message || "Unexpected error while saving onboarding data");
+  const msg =
+    err?.message ||
+    err?.error_description ||
+    `${err?.code || ""} ${err?.details || ""}`.trim() ||
+    "Unexpected error while saving onboarding data";
+
+  setSubmitError(msg);
   return false;
 } finally {
     setLoadingSubmit(false);
@@ -279,21 +299,22 @@ for (const row of reminderList) {
   const current = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
 
   if (current === StepType.EMAIL_SIGNUP) {
-    const ok = await submitOnboardingToSupabase();
-
-    if (!ok) {
-      return; // ⛔ bleib im Step + zeige Fehler
+    if (!sender) {
+      setSubmitError("Please wait a moment. Initializing your session...");
+      return;
     }
 
-    setSubmitError(null); // ✅ WICHTIG: Error explizit löschen
+    const ok = await submitOnboardingToSupabase();
+    if (!ok) return;
+
+    setSubmitError(null);
   }
 
   if (currentStepIndex < FLOW.length - 1) {
     setCurrentStepIndex(idx => idx + 1);
-  } else {
-    alert("Flow completed");
   }
 };
+
 
 
   const prevStep = () => {
@@ -350,7 +371,13 @@ for (const row of reminderList) {
         return <DashboardStep data={userData} onNext={nextStep} />;
 
       case StepType.EMAIL_SIGNUP:
-  return <EmailSignupStep {...props} onNext={nextStep} />;
+  return (
+    <EmailSignupStep
+      data={userData}
+      onNext={nextStep}
+    />
+  );
+
 
       case StepType.PAYWALL_HOOK:
         return <PaywallHook onNext={triggerPromo} />;
