@@ -260,22 +260,25 @@ const submitOnboardingToSupabase = async (): Promise<boolean> => {
   // Step Navigation
   // -------------------------------------------------------------
   const nextStep = async () => {
-    const current = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
+  const current = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
 
-    if (current === StepType.EMAIL_SIGNUP) {
-      try {
-        await submitOnboardingToSupabase();
-      } catch {
-        return;
-      }
+  if (current === StepType.EMAIL_SIGNUP) {
+    const ok = await submitOnboardingToSupabase();
+
+    if (!ok) {
+      return; // ⛔ bleib im Step + zeige Fehler
     }
 
-    if (currentStepIndex < FLOW.length - 1) {
-      setCurrentStepIndex(idx => idx + 1);
-    } else {
-      alert("Flow completed");
-    }
-  };
+    setSubmitError(null); // ✅ WICHTIG: Error explizit löschen
+  }
+
+  if (currentStepIndex < FLOW.length - 1) {
+    setCurrentStepIndex(idx => idx + 1);
+  } else {
+    alert("Flow completed");
+  }
+};
+
 
   const prevStep = () => {
     if (currentStepIndex > 0) setCurrentStepIndex(idx => idx - 1);
