@@ -350,7 +350,7 @@ for (const row of reminderList) {
         return <DashboardStep data={userData} onNext={nextStep} />;
 
       case StepType.EMAIL_SIGNUP:
-        return <EmailSignupStep {...props} />;
+  return <EmailSignupStep {...props} onNext={nextStep} />;
 
       case StepType.PAYWALL_HOOK:
         return <PaywallHook onNext={triggerPromo} />;
