@@ -190,11 +190,20 @@ const submitOnboardingToSupabase = async (): Promise<boolean> => {
       return Number.isFinite(Number(w)) ? Number(w) : null;
     })();
 
-    const plan = userData.aiPlan;
-    const kcal_bedarf = plan ? Math.round(plan.targetCalories ?? 0) : null;
-    const carbs_main = plan ? Math.round(plan.carbsGrams ?? 0) : null;
-    const protein_main = plan ? Math.round(plan.proteinGrams ?? 0) : null;
-    const fat_main = plan ? Math.round(plan.fatsGrams ?? 0) : null;
+const safeInt = (v: any): number | null => {
+  if (v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.round(n) : null;
+};
+
+
+   const plan = userData.aiPlan;
+
+const kcal_bedarf = safeInt(plan?.targetCalories);
+const carbs_main = safeInt(plan?.carbsGrams);
+const protein_main = safeInt(plan?.proteinGrams);
+const fat_main = safeInt(plan?.fatsGrams);
+
 
     // 1) stammdaten update (inkl. testabo + macros)
     const { error: stammdatenError } = await supabase
