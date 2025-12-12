@@ -296,6 +296,8 @@ try {
   // Step Navigation
   // -------------------------------------------------------------
   const nextStep = async () => {
+  if (loadingSubmit) return;
+
   const current = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
 
   if (current === StepType.EMAIL_SIGNUP) {
@@ -314,6 +316,7 @@ try {
     setCurrentStepIndex(idx => idx + 1);
   }
 };
+
 
 
 
@@ -411,7 +414,7 @@ try {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.25 }}
-            className={`${loadingSubmit ? "opacity-60 pointer-events-none" : ""} h-full`}
+            className={`${loadingSubmit ? "opacity-60" : ""} h-full`}
           >
             {renderStep()}
           </motion.div>
