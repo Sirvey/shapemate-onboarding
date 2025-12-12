@@ -160,8 +160,11 @@ export default function App() {
   };
 
 
-  const submitOnboardingToSupabase = async () => {
-  if (!sender) return false;
+  // -------------------------------------------------------------
+// Save onboarding → Supabase
+// -------------------------------------------------------------
+const submitOnboardingToSupabase = async () => {
+  if (!sender) return;
 
   setLoadingSubmit(true);
   setSubmitError(null);
@@ -170,13 +173,17 @@ export default function App() {
     const genderCode = mapGenderToCode(userData.gender);
 
     const heightCm =
-      userData.height.unit === 'cm'
+      userData.height.unit === "cm"
         ? Number(userData.height.value)
         : parseImperialHeightToCm(userData.height.value);
 
     const weightKg = convertWeightToKg(userData.weight);
 
-    // Base data
+    const plan = userData.aiPlan;
+
+    // ----------------------------------------
+    // UPDATE stammdaten (including AI macros)
+    // ----------------------------------------
     const { error: stammdatenError } = await supabase
       .from("stammdaten")
       .update({
@@ -189,28 +196,34 @@ export default function App() {
         diet: userData.diet,
         referral_code: userData.referralCode,
         mail: userData.email,
+
+        // ✅ AI-calculated values
+        kcal_bedarf: plan ? Math.round(plan.targetCalories) : null,
+        carbs_main: plan ? Math.round(plan.carbsGrams) : null,
+        protein_main: plan ? Math.round(plan.proteinGrams) : null,
+        fat_main: plan ? Math.round(plan.fatsGrams) : null,
+
+        // ✅ Upgrade from omega → testabo
         abomodell: "testabo",
       })
       .eq("sender", sender);
 
-    if (stammdatenError) {
-      setSubmitError(stammdatenError.message);
-      return false;
-    }
+    if (stammdatenError) throw stammdatenError;
 
-    // Weight
+    // ----------------------------------------
+    // Save weight entry (history)
+    // ----------------------------------------
     if (weightKg != null) {
       const { error: weightError } = await supabase
         .from("user_weights")
         .insert({ sender, weight: weightKg });
 
-      if (weightError) {
-        setSubmitError(weightError.message);
-        return false;
-      }
+      if (weightError) throw weightError;
     }
 
-    // Notifications
+    // ----------------------------------------
+    // Notification preferences
+    // ----------------------------------------
     const prefs = userData.notificationPreferences;
     const reminderList = [
       { type: "weighing", key: "weighing" },
@@ -225,18 +238,19 @@ export default function App() {
         .eq("sender", sender)
         .eq("type", row.type);
 
-      if (error) {
-        setSubmitError(error.message);
-        return false;
-      }
+      if (error) throw error;
     }
 
-    return true;
-
+  } catch (err: any) {
+    setSubmitError(
+      err?.message || "Unexpected error while saving onboarding data"
+    );
+    throw err;
   } finally {
     setLoadingSubmit(false);
   }
 };
+
 
 
 
