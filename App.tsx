@@ -245,9 +245,9 @@ const submitOnboardingToSupabase = async (): Promise<boolean> => {
 
     return true;
   } catch (err: any) {
-    setSubmitError(err?.message || "Unexpected error while saving onboarding data");
-    return false; // wichtig: NICHT throwen, sonst bleibt der UI-Flow hängen
-  } finally {
+  console.error("submitOnboardingToSupabase failed:", err);
+  return false;
+} finally {
     setLoadingSubmit(false);
   }
 };
