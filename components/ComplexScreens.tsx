@@ -29,7 +29,7 @@ export const AlreadyRegisteredScreen: React.FC = () => {
     }
 
     // Fallback Browser
-    window.location.href = "https://wa.me/";
+    window.location.href = "https://wa.me/491776883447";
   };
 
   return (

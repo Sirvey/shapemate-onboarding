@@ -165,38 +165,44 @@ if (tokenUsed === true) {
   // OpenAI Nutrition Plan
   // -------------------------------------------------------------
   const runOpenAIPlan = async () => {
-    try {
-      setPlanLoading(true);
-      setPlanError(null);
+  try {
+    if (tokenUsed) return; // 🔒 Safety
 
-      const plan = await generateNutritionPlan(userData);
+    setPlanLoading(true);
+    setPlanError(null);
 
-      setUserData(prev => ({ ...prev, aiPlan: plan }));
-      return plan;
+    const plan = await generateNutritionPlan(userData);
+    setUserData(prev => ({ ...prev, aiPlan: plan }));
 
-    } catch (e) {
-      console.error(e);
-      setPlanError("We could not generate your personalized plan. Please try again.");
-      throw e;
+    await markTokenAsUsed();
+    setTokenUsed(true); // 🔒 lokal synchronisieren
 
-    } finally {
-      setPlanLoading(false);
-    }
-  };
+    return plan;
+  } catch (e) {
+    console.error(e);
+    setPlanError("We could not generate your personalized plan.");
+    throw e;
+  } finally {
+    setPlanLoading(false);
+  }
+};
+
 
 const markTokenAsUsed = async () => {
-  if (!token || !sender) return;
+  if (!token || !sender || tokenUsed) return;
 
   const { error } = await supabase
     .from("registration_tokens")
     .update({ used: true })
     .eq("token", token)
-    .eq("sender", sender);
+    .eq("sender", sender)
+    .eq("used", false); // 🔒 verhindert Race Conditions
 
   if (error) {
     console.warn("Failed to mark token as used:", error);
   }
 };
+
 
 
   // -------------------------------------------------------------
@@ -311,8 +317,6 @@ try {
   console.warn("erinnerungen block crashed:", e);
   // NICHT throwen
 }
-
-await markTokenAsUsed();
 
 
     return true;
