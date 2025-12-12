@@ -175,7 +175,6 @@ if (tokenUsed === true) {
     setUserData(prev => ({ ...prev, aiPlan: plan }));
 
     await markTokenAsUsed();
-    setTokenUsed(true); // 🔒 lokal synchronisieren
 
     return plan;
   } catch (e) {
