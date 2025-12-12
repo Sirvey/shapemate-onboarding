@@ -13,7 +13,8 @@ import {
   ResultsStep,
   DashboardStep,
   PaywallHook,
-  PaywallPromo
+  PaywallPromo,
+  AlreadyRegisteredScreen
 } from './components/ComplexScreens';
 
 import { supabase } from './supabaseClient';
@@ -96,36 +97,60 @@ export default function App() {
   const [planLoading, setPlanLoading] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
 
+  const [token, setToken] = useState<string | null>(null);
+const [tokenUsed, setTokenUsed] = useState<boolean | null>(null);
+const [checkingToken, setCheckingToken] = useState(true);
 
   // -------------------------------------------------------------
   // Load Sender from registration_tokens
   // -------------------------------------------------------------
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token') || params.get('t') || params.get('auth');
+  const params = new URLSearchParams(window.location.search);
+  const urlToken = params.get("token") || params.get("t") || params.get("auth");
 
-    if (!token) {
-      setSubmitError('Missing token in onboarding link.');
+
+  if (!urlToken) {
+    setSubmitError("Missing token in onboarding link.");
+    setCheckingToken(false);
+    return;
+  }
+
+  setToken(urlToken);
+
+  const loadTokenData = async () => {
+    const { data, error } = await supabase
+      .from("registration_tokens")
+      .select("sender, used")
+      .eq("token", urlToken)
+      .single();
+
+    if (error || !data) {
+      setSubmitError("Could not find a registration for this link.");
+      setCheckingToken(false);
       return;
     }
 
-    const loadSender = async () => {
-      const { data, error } = await supabase
-        .from('registration_tokens')
-        .select('sender')
-        .eq('token', token)
-        .single();
+    setSender(data.sender);
+    setTokenUsed(data.used === true);
+    setCheckingToken(false);
+  };
 
-      if (error || !data) {
-        setSubmitError('Could not find a registration for this link.');
-        return;
-      }
+  loadTokenData();
+}, []);
 
-      setSender(data.sender);
-    };
+if (checkingToken) {
+  return (
+    <div className="h-screen flex items-center justify-center text-gray-400 text-sm">
+      Initializing…
+    </div>
+  );
+}
 
-    loadSender();
-  }, []);
+
+if (tokenUsed === true) {
+  return <AlreadyRegisteredScreen />;
+}
+
 
 
   // -------------------------------------------------------------
@@ -158,6 +183,20 @@ export default function App() {
       setPlanLoading(false);
     }
   };
+
+const markTokenAsUsed = async () => {
+  if (!token || !sender) return;
+
+  const { error } = await supabase
+    .from("registration_tokens")
+    .update({ used: true })
+    .eq("token", token)
+    .eq("sender", sender);
+
+  if (error) {
+    console.warn("Failed to mark token as used:", error);
+  }
+};
 
 
   // -------------------------------------------------------------
@@ -198,6 +237,9 @@ const safeInt = (v: any): number | null => {
   const n = Number(v);
   return Number.isFinite(n) ? Math.round(n) : null;
 };
+
+
+
 
 
    const plan = userData.aiPlan;
@@ -270,6 +312,7 @@ try {
   // NICHT throwen
 }
 
+await markTokenAsUsed();
 
 
     return true;
@@ -296,6 +339,8 @@ try {
   // Step Navigation
   // -------------------------------------------------------------
   const nextStep = async () => {
+    if (loadingSubmit) return;
+
   const current = showPromo ? StepType.PAYWALL_PROMO : FLOW[currentStepIndex];
 
   if (current === StepType.EMAIL_SIGNUP) {

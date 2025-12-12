@@ -23,3 +23,35 @@
   animation: spin-fast 1.4s linear infinite;
 }
 
+/* =============================
+   ✨ Shine Animation
+============================= */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: shine 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+

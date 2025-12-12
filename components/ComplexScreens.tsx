@@ -11,12 +11,54 @@ import {
   Lock,
   Gift,
   ArrowRight,
+  Check,
 } from "lucide-react";
 import { UserData } from "../types";
 import confetti from "canvas-confetti";
 import { generateNutritionPlan } from "../openaiClient";
 import LoadingBar from "./LoadingBar";
-import { supabase } from "../supabaseClient";
+import { Sparkle } from "./Sparkle";
+
+
+export const AlreadyRegisteredScreen: React.FC = () => {
+  const handleClose = () => {
+    // WhatsApp WebView Close
+    if ((window as any).ReactNativeWebView) {
+      (window as any).ReactNativeWebView.postMessage("close");
+      return;
+    }
+
+    // Fallback Browser
+    window.location.href = "https://wa.me/";
+  };
+
+  return (
+    <div className="h-screen w-full bg-white flex items-center justify-center px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="max-w-md w-full text-center"
+      >
+        <h1 className="text-2xl font-semibold mb-4">
+          You are already registered
+        </h1>
+
+        <p className="text-gray-500 text-sm mb-10 leading-relaxed">
+          This onboarding link has already been used.
+          For security reasons, the onboarding process can only be completed once.
+        </p>
+
+        <button
+          onClick={handleClose}
+          className="w-full rounded-xl bg-black py-3 text-white font-medium"
+        >
+          Back to WhatsApp
+        </button>
+      </motion.div>
+    </div>
+  );
+};
 
 interface Props {
   data: UserData;
@@ -47,10 +89,10 @@ export const ResultsStep: React.FC<Props> = ({ data, onNext }) => {
 
     async function run() {
       try {
-        const plan = await generateNutritionPlan(data);
         if (!cancelled) {
-          data.aiPlan = plan;
-        }
+  onNext(); // Plan ist bereits im Parent
+}
+
       } catch (err) {
         console.error("Plan generation failed", err);
       } finally {
@@ -277,7 +319,7 @@ const MacroCard = ({
     </div>
 
     <div
-      className={`relative w-20 h-20 mx-auto border-4 border-${ringColor} rounded-full flex items-center justify-center`}
+      className={`relative w-20 h-20 mx-auto border-4 border-gray-200 border-orange-100 rounded-full flex items-center justify-center`}
     >
       <span className="font-bold text-lg">
         {value}
@@ -398,7 +440,9 @@ declare global {
 }
 
 
-
+interface Props {
+  onNext: () => void;
+}
 
 
 // Exit Promo — 3-Day Free Trial Offer (Yearly €4.15/mo)
@@ -406,18 +450,22 @@ export const PaywallPromo: React.FC<Props> = ({ onNext }) => {
 
   // WhatsApp WebView close logic
   const closeWebview = () => {
-    if (window.ReactNativeWebView?.postMessage) {
-      try {
-        window.ReactNativeWebView.postMessage(
-          JSON.stringify({ action: "close" })
-        );
-      } catch (e) {
-        console.warn("Android closeWebView failed", e);
-      }
+  // 1) ANDROID WhatsApp WebView (funktioniert dort)
+  if (window.ReactNativeWebView?.postMessage) {
+    try {
+      window.ReactNativeWebView.postMessage(
+        JSON.stringify({ action: "close" })
+      );
+      return;
+    } catch (e) {
+      console.warn("Android closeWebView failed", e);
     }
+  }
 
-    window.location.replace("https://wa.me/");
-  };
+  // 2) iOS + Fallback → direkt zurück in den Shapemate Chat
+  window.location.href = "https://wa.me/491776883447";
+};
+
 
   const handleNoThanks = () => {
     closeWebview();
@@ -431,80 +479,151 @@ export const PaywallPromo: React.FC<Props> = ({ onNext }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
+    <div className="min-h-full bg-white flex flex-col items-center text-gray-900">
 
-      {/* Removed the X button entirely */}
+      {/* Main Content */}
+      <main className="flex-1 w-full max-w-md px-6 pb-8 flex flex-col items-center">
 
-      {/* Offer Title */}
-      <div className="px-6 text-center mt-6">
-        <h1 className="text-3xl font-bold mb-4">Your one-time offer</h1>
+        {/* Headline */}
+        <h1 className="text-3xl font-extrabold mb-8 mt-6 text-center tracking-tight">
+          Your one-time offer
+        </h1>
 
-        {/* Offer Card */}
-        <div className="relative bg-[#1A1A1A] text-white rounded-3xl py-10 px-6 shadow-xl mb-8">
-          <div className="absolute -left-6 top-1/2 -translate-y-1/2 text-gray-300 text-4xl">
-            ✨
-          </div>
-          <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-gray-300 text-4xl">
-            ✨
-          </div>
+        {/* Hero Section */}
+<div className="relative mb-8 w-full flex justify-center items-center">
 
-          <h2 className="text-4xl font-extrabold tracking-tight">
-            3-DAY FREE TRIAL
-          </h2>
-          <p className="text-sm text-gray-300 mt-2">
-            on the yearly plan (€4.15/mo)
-          </p>
+  {/* Sparkles Left */}
+  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 flex flex-col items-end gap-2">
+    <Sparkle className="w-8 h-8 rotate-12" fill="#7C7F82" />
+    <Sparkle className="w-12 h-12 -mr-4" fill="#1F3D2B" />
+    <Sparkle className="w-5 h-5" fill="#323232" />
+  </div>
+
+  {/* Sparkles Right */}
+  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 flex flex-col items-start gap-1">
+    <Sparkle className="w-10 h-10 -ml-2 mb-2" fill="#1F3D2B" />
+    <Sparkle className="w-7 h-7" fill="#7C7F82" />
+    <Sparkle className="w-5 h-5 mt-2 ml-4" fill="#323232" />
+  </div>
+
+  {/* Offer Box */}
+  <div
+  className="
+    relative
+    z-10
+    w-64
+    h-40
+    p-8
+    rounded-2xl
+    flex
+    flex-col
+    justify-center
+    items-center
+    text-white
+    shine
+  "
+  style={{
+    background: "linear-gradient(180deg, #1F3D2B 0%, #3A5B46 100%)",
+    boxShadow: "0 12px 24px rgba(44, 74, 53, 0.45)",
+  }}
+>
+
+
+
+    <div className="text-4xl font-bold tracking-wider mb-1">
+      3-DAY
+    </div>
+    <div className="text-3xl font-bold tracking-wider">
+      FREE TRIAL
+    </div>
+    <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 pointer-events-none" />
+  </div>
+</div>
+
+
+        {/* Pricing */}
+        <div className="flex items-baseline gap-3 mb-6">
+          <span className="text-2xl line-through decoration-2 font-bold">
+            €9.90
+          </span>
+          <span className="text-2xl font-light text-gray-600">
+            €4.15 / mo
+          </span>
         </div>
 
-        {/* Pricing Section */}
-        <div className="mt-4">
-          <p className="text-gray-400 line-through text-lg">€9.90 / month</p>
-          <p className="text-2xl font-bold mt-1">€4.15 / mo</p>
-          <p className="text-xs text-gray-500 mt-3 px-6">
-            Save 60% with yearly plan.<br />Once you close this offer, it’s gone forever.
-          </p>
+        {/* Description */}
+        <p className="text-center text-gray-500 text-sm px-4 mb-10 leading-relaxed">
+          Save 60% with yearly plan.<br />
+          Once you close this offer, it’s gone forever.
+        </p>
+
+        {/* Plan Card */}
+        <div className="w-full border-2 border-black rounded-xl overflow-hidden mb-8 bg-white">
+          <div className="bg-[#1C1C1E] text-white text-center py-1.5 text-xs font-bold uppercase tracking-widest">
+            3-Day Free Trial
+          </div>
+
+          <div className="p-4 flex justify-between items-center">
+            <div className="flex flex-col">
+              <span className="font-bold text-lg">Yearly Plan</span>
+              <span className="text-gray-500 text-sm mt-0.5">
+                €4.15 / mo
+              </span>
+            </div>
+            <div className="font-bold text-lg">
+              €4.15
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* CTA Buttons */}
-      <div className="mt-auto p-6">
+        {/* CTA Buttons — UNVERÄNDERTE LOGIK */}
+        <div className="w-full mt-auto">
 
-        {/* PRIMARY TRIAL BUTTON — like Paywall premium */}
-        <button
-          onClick={handleStartTrial}
-          className="
-            w-full 
-            py-4 
-            rounded-full 
-            bg-black 
-            text-white 
-            text-sm 
-            font-bold
-            mb-3
-          "
-        >
-          Start Free 3-Day Trial →
-        </button>
+          {/* PRIMARY */}
+          <button
+            onClick={handleStartTrial}
+            className="
+              w-full
+              py-4
+              rounded-full
+              bg-black
+              text-white
+              text-sm
+              font-bold
+              mb-3
+            "
+          >
+            Start Free 3-Day Trial →
+          </button>
 
-        {/* SECONDARY NO THANKS BUTTON — like paywall basic */}
-        <button
-          onClick={handleNoThanks}
-          className="
-            w-full 
-            py-3 
-            rounded-full 
-            border border-gray-300 
-            text-gray-700 
-            text-sm 
-            font-medium
-            bg-gray-50 
-            hover:bg-gray-100 
-            transition-colors
-          "
-        >
-          No Thanks
-        </button>
-      </div>
+          {/* SECONDARY */}
+          <button
+            onClick={handleNoThanks}
+            className="
+              w-full
+              py-3
+              rounded-full
+              border
+              border-gray-300
+              text-gray-700
+              text-sm
+              font-medium
+              bg-gray-50
+              hover:bg-gray-100
+              transition-colors
+            "
+          >
+            No Thanks
+          </button>
+        </div>
+
+        {/* Footer Trust */}
+        <div className="mt-6 flex items-center justify-center gap-2 text-sm font-semibold">
+          <Check className="w-5 h-5 stroke-[3]" />
+          <span>No Commitment. Cancel Anytime</span>
+        </div>
+
+      </main>
     </div>
   );
 };
